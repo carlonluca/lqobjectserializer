@@ -1,37 +1,16 @@
-#include <QObject>
-#include <QMetaObject>
-#include <QMetaProperty>
-#ifdef QT_DEBUG
-#include <QDebug>
-#endif
-
 #include "lcserializer.h"
 
-template<class T>
-LCSerializer<T>::LCSerializer()
+LCSerializer::LCSerializer()
 {
 
 }
 
-template<class T>
-QJsonObject LCSerializer<T>::serialize(QObject* object)
+QJsonObject LCSerializer::serialize(QObject* object)
 {
 	return serializeObject(object);
 }
 
-template<class T>
-QSharedPointer<T> LCSerializer<T>::deserialize(QJsonObject json)
-{
-}
-
-template<class T>
-T* LCSerializer<T>::deserializeJson(QJsonObject json)
-{
-
-}
-
-template<class T>
-QJsonObject LCSerializer<T>::serializeObject(QObject* object)
+QJsonObject LCSerializer::serializeObject(QObject* object)
 {
 	QJsonObject json;
 

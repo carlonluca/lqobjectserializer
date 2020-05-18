@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 {
 	QCoreApplication a(argc, argv);
 
-	LCSerializer serializer;
+    LCSerializer serializer;
 	SomeQObjectChild childObj;
 	childObj.setObjectName(QStringLiteral("HELLO2"));
 	SomeQObject someObj;
@@ -51,6 +51,11 @@ int main(int argc, char** argv)
 	QJsonDocument doc(json);
 
 	qDebug() << QString(doc.toJson(QJsonDocument::Indented));
+
+    LCDeserializer<SomeQObject> deserializer;
+    QSharedPointer<SomeQObject> res = deserializer.deserialize(json);
+
+    qDebug() << "Deserialized:" << res->someString();
 
 	return a.exec();
 }
