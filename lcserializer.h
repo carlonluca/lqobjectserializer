@@ -81,7 +81,12 @@ void LCDeserializer<T>::deserializeJson(QJsonObject json, QObject* object)
                 case QJsonValue::Object:
                     // TODO
                     qDebug() << "Process object of class:"
-                             << metaObj->property(i).typeName();
+                             << metaObj->property(i).typeName()
+                             << QMetaType::type(metaObj->property(i).typeName());
+                    int id = QMetaType::type(metaObj->property(i).typeName());
+                    if (!id)
+                        break;
+
                     break;
                 }
             }

@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
     qDebug() << "Deserialized:" << res->someString();
 
-	return a.exec();
+    return 0;
 }
 
 #include "main.moc"
