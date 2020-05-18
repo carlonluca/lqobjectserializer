@@ -80,12 +80,26 @@ void LCDeserializer<T>::deserializeJson(QJsonObject json, QObject* object)
                     break;
                 case QJsonValue::Object:
                     // TODO
-                    qDebug() << "Process object of class:"
-                             << metaObj->property(i).typeName()
-                             << QMetaType::type(metaObj->property(i).typeName());
-                    int id = QMetaType::type(metaObj->property(i).typeName());
+					QString className(metaObj->property(i).typeName());
+					className.replace("*", "");
+					int id = QMetaType::type(className.toLatin1().data());
                     if (!id)
                         break;
+
+					qDebug() << "Process object of class:"
+							 << metaObj->property(i).typeName()
+							 << className
+							 << id;
+
+					if (id != QMetaType::UnknownType) {
+						void* opaquePtr = QMetaType::create(id);
+						QObject* qobjectPtr = static_cast<QObject*>(opaquePtr);
+						object->setProperty(metaObj->property(i).name(),
+											QVariant::fromValue<QObject*>(qobjectPtr));
+						deserializeJson(it.value().toObject(), qobjectPtr);
+					}
+
+					// TODO: Handle errors.
 
                     break;
                 }
