@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QVariant>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QObject>
 #include <QMetaObject>
 #include <QMetaProperty>
@@ -22,7 +23,9 @@ public:
     QJsonObject serialize(QObject* object);
 
 protected:
-    QJsonObject serializeObject(QObject* value);
+	QJsonValue serializeObject(QObject* value);
+	QJsonArray serializeArray(const QSequentialIterable &it);
+	QJsonValue serializeValue(const QVariant& value);
 };
 
 template<class T>

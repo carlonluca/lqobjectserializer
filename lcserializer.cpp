@@ -1,4 +1,4 @@
-#include "lcserializer.h"
+﻿#include "lcserializer.h"
 
 LCSerializer::LCSerializer()
 {
@@ -7,10 +7,10 @@ LCSerializer::LCSerializer()
 
 QJsonObject LCSerializer::serialize(QObject* object)
 {
-	return serializeObject(object);
+	return !object ? QJsonObject() : serializeObject(object).toObject();
 }
 
-QJsonObject LCSerializer::serializeObject(QObject* object)
+QJsonValue LCSerializer::serializeObject(QObject* object)
 {
 	QJsonObject json;
 
@@ -18,30 +18,49 @@ QJsonObject LCSerializer::serializeObject(QObject* object)
 	for (int i = 0; i < metaObj->propertyCount(); ++i) {
 		const char* propertyName = metaObj->property(i).name();
 		QVariant value = object->property(propertyName);
-#ifdef QT_DEBUG
-		qDebug() << "Name:" << propertyName << ", value:" << value;
-#endif
-        if (value.canConvert<QObject*>()) {
-            if (!value.value<QObject*>())
-                json[propertyName] = QJsonValue::Null;
-            else
-                json[propertyName] = serializeObject(value.value<QObject*>());
-        }
-		else {
-			switch (static_cast<QMetaType::Type>(value.type())) {
-			case QMetaType::QString:
-				json[propertyName] = value.value<QString>(); break;
-			case QMetaType::Int:
-				json[propertyName] = value.toInt(); break;
-			case QMetaType::UInt:
-				json[propertyName] = static_cast<qint64>(value.toUInt()); break;
-			case QMetaType::Long:
-				json[propertyName] = static_cast<qint64>(value.value<long>()); break;
-			case QMetaType::LongLong:
-				json[propertyName] = static_cast<qint64>(value.value<long long>()); break;
-			}
-		}
+		QJsonValue jsonValue = serializeValue(value);
+		json[propertyName] = jsonValue;
 	}
 
 	return json;
+}
+
+QJsonArray LCSerializer::serializeArray(const QSequentialIterable& it)
+{
+	qDebug() << Q_FUNC_INFO;
+	QJsonArray ret;
+	for (const QVariant& variant: it)
+		ret.append(serializeValue(variant));
+	return ret;
+}
+
+QJsonValue LCSerializer::serializeValue(const QVariant& value)
+{
+	qDebug() << "Serialize:" << value.type();
+	if (value.canConvert<QVariantList>())
+		return serializeArray(value.value<QSequentialIterable>());
+	else if (value.canConvert<QObject*>()) {
+		if (!value.value<QObject*>())
+			return QJsonValue::Null;
+		else
+			return serializeObject(value.value<QObject*>());
+	}
+	else {
+		switch (static_cast<QMetaType::Type>(value.type())) {
+		case QMetaType::QString:
+			return QJsonValue(value.value<QString>());
+		case QMetaType::Int:
+		case QMetaType::UInt:
+		case QMetaType::Long:
+		case QMetaType::LongLong:
+			return QJsonValue(value.toDouble());
+		case QMetaType::Bool:
+			return QJsonValue(value.toBool());
+		case QMetaType::Float:
+		case QMetaType::Double:
+			return QJsonValue(value.toDouble());
+		}
+	}
+
+	return QJsonValue();
 }
