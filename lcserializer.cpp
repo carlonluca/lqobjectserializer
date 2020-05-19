@@ -21,8 +21,12 @@ QJsonObject LCSerializer::serializeObject(QObject* object)
 #ifdef QT_DEBUG
 		qDebug() << "Name:" << propertyName << ", value:" << value;
 #endif
-		if (value.canConvert<QObject*>())
-			json[propertyName] = serializeObject(value.value<QObject*>());
+        if (value.canConvert<QObject*>()) {
+            if (!value.value<QObject*>())
+                json[propertyName] = QJsonValue::Null;
+            else
+                json[propertyName] = serializeObject(value.value<QObject*>());
+        }
 		else {
 			switch (static_cast<QMetaType::Type>(value.type())) {
 			case QMetaType::QString:

@@ -29,19 +29,21 @@ template<class T>
 class LCDeserializer
 {
 public:
-    LCDeserializer();
+    LCDeserializer(const QHash<QString, QMetaObject>& factory);
     QSharedPointer<T> deserialize(const QJsonObject& json);
 
 protected:
     void deserializeJson(QJsonObject json, QObject* object);
     void deserializeArray(QJsonArray array);
+
+private:
+    QHash<QString, QMetaObject> m_factory;
 };
 
 template<class T>
-LCDeserializer<T>::LCDeserializer()
-{
-
-}
+LCDeserializer<T>::LCDeserializer(const QHash<QString, QMetaObject>& factory) :
+    m_factory(factory)
+{}
 
 template<class T>
 QSharedPointer<T> LCDeserializer<T>::deserialize(const QJsonObject& json)
@@ -79,25 +81,10 @@ void LCDeserializer<T>::deserializeJson(QJsonObject json, QObject* object)
                     // TODO
                     break;
                 case QJsonValue::Object:
-                    // TODO
-					QString className(metaObj->property(i).typeName());
-					className.replace("*", "");
-					int id = QMetaType::type(className.toLatin1().data());
-                    if (!id)
-                        break;
-
-					qDebug() << "Process object of class:"
-							 << metaObj->property(i).typeName()
-							 << className
-							 << id;
-
-					if (id != QMetaType::UnknownType) {
-						void* opaquePtr = QMetaType::create(id);
-						QObject* qobjectPtr = static_cast<QObject*>(opaquePtr);
-						object->setProperty(metaObj->property(i).name(),
-											QVariant::fromValue<QObject*>(qobjectPtr));
-						deserializeJson(it.value().toObject(), qobjectPtr);
-					}
+                    QString className(metaObj->property(i).typeName());
+                    QObject* child = m_factory[className].newInstance(Q_ARG(QObject*, object));
+                    object->setProperty(metaObj->property(i).name(), QVariant::fromValue<QObject*>(child));
+                    deserializeJson(it.value().toObject(), child);
 
 					// TODO: Handle errors.
 
