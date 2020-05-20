@@ -27,7 +27,6 @@ QJsonValue LCSerializer::serializeObject(QObject* object)
 
 QJsonArray LCSerializer::serializeArray(const QSequentialIterable& it)
 {
-	qDebug() << Q_FUNC_INFO;
 	QJsonArray ret;
 	for (const QVariant& variant: it)
 		ret.append(serializeValue(variant));
@@ -36,7 +35,6 @@ QJsonArray LCSerializer::serializeArray(const QSequentialIterable& it)
 
 QJsonValue LCSerializer::serializeValue(const QVariant& value)
 {
-	qDebug() << "Serialize:" << value.type();
 	if (value.canConvert<QVariantList>())
 		return serializeArray(value.value<QSequentialIterable>());
 	else if (value.canConvert<QObject*>()) {

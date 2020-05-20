@@ -53,7 +53,6 @@ QSharedPointer<T> LCDeserializer<T>::deserialize(const QJsonObject& json)
 {
     T* t = new T;
     deserializeJson(json, t);
-
     return QSharedPointer<T>(t);
 }
 
@@ -81,7 +80,7 @@ void LCDeserializer<T>::deserializeJson(QJsonObject json, QObject* object)
                     object->setProperty(metaObj->property(i).name(), it.value().toString());
                     break;
                 case QJsonValue::Array:
-                    // TODO
+                    qDebug() << metaObj->property(i).type() << metaObj->property(i).typeName();
                     break;
                 case QJsonValue::Object:
                     QString className(metaObj->property(i).typeName());

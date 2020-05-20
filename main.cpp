@@ -49,7 +49,8 @@ class SomeQObject : public QObject
     Q_PROPERTY(SomeQObjectChild* child1 READ child1 WRITE setChild1 NOTIFY child1Changed)
     Q_PROPERTY(SomeQObjectChild2* child2 READ child2 WRITE setChild2 NOTIFY child2Changed)
 	Q_PROPERTY(QList<int> intList READ intList WRITE setIntList NOTIFY intListChanged)
-	Q_PROPERTY(QStringList stringList READ stringList WRITE setStringList NOTIFY stringListChanged)
+    Q_PROPERTY(QList<QString> stringList READ stringList WRITE setStringList NOTIFY stringListChanged)
+    Q_PROPERTY(QList<QObject*> objectList READ objectList WRITE setObjectList NOTIFY objectListChanged)
 public:
 	Q_INVOKABLE SomeQObject(QObject* parent = nullptr) :
 		QObject(parent) {}
@@ -64,6 +65,7 @@ public:
     SomeQObjectChild2* child2() const { return m_child2; }
 	QList<int> intList() const { return m_intList; }
 	QList<QString> stringList() const { return m_stringList; }
+    QList<QObject*> objectList() const { return m_objectList; }
 
 public slots:
 	void setSomeInt(int someInt) { m_someInt = someInt; }
@@ -75,6 +77,7 @@ public slots:
     void setChild2(SomeQObjectChild2* child2) { m_child2 = child2; }
 	void setIntList(QList<int> intList) { m_intList = intList; }
 	void setStringList(QStringList stringList) { m_stringList = stringList; }
+    void setObjectList(QList<QObject*> objectList) { m_objectList = objectList; }
 
 signals:
 	void someIntChanged();
@@ -86,6 +89,7 @@ signals:
     void child2Changed(SomeQObjectChild2* child2);
 	void intListChanged();
 	void stringListChanged();
+    void objectListChanged();
 
 private:
 	int m_someInt = 0;
@@ -97,6 +101,7 @@ private:
     SomeQObjectChild2* m_child2 = nullptr;
 	QList<int> m_intList;
 	QList<QString> m_stringList;
+    QList<QObject*> m_objectList;
 };
 
 Q_DECLARE_METATYPE(SomeQObject*);
@@ -117,8 +122,13 @@ int main(int argc, char** argv)
 		someObj.setSomeDouble(7.6);
         someObj.setSomeString(QStringLiteral("HELLO"));
         someObj.setChild1(&childObj);
-		someObj.setIntList(QList<int>() << 1 << 2 << 3);
-		someObj.setStringList(QStringList() << "A" << "B" << "C" << "D");
+        someObj.setIntList(QList<int>()
+                           << 1 << 2 << 3);
+        someObj.setStringList(QStringList()
+                              << "A" << "B" << "C" << "D");
+        someObj.setObjectList(QList<QObject*>()
+                              << new SomeQObjectChild(&someObj)
+                              << new SomeQObjectChild(&someObj));
 
         LCSerializer serializer;
         QJsonObject json = serializer.serialize(&someObj);
