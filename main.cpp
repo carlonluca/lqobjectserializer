@@ -50,7 +50,7 @@ class SomeQObject : public QObject
     Q_PROPERTY(SomeQObjectChild2* child2 READ child2 WRITE setChild2 NOTIFY child2Changed)
 	Q_PROPERTY(QList<int> intList READ intList WRITE setIntList NOTIFY intListChanged)
     Q_PROPERTY(QList<QString> stringList READ stringList WRITE setStringList NOTIFY stringListChanged)
-    Q_PROPERTY(QList<SomeQObjectChild*> objectList READ objectList WRITE setObjectList NOTIFY objectListChanged)
+	Q_PROPERTY(QList<SomeQObjectChild*> objectList READ objectList WRITE setObjectList NOTIFY objectListChanged)
 public:
 	Q_INVOKABLE SomeQObject(QObject* parent = nullptr) :
 		QObject(parent) {}
@@ -66,6 +66,9 @@ public:
 	QList<int> intList() const { return m_intList; }
 	QList<QString> stringList() const { return m_stringList; }
     QList<SomeQObjectChild*> objectList() const { return m_objectList; }
+
+public slots:
+	void add_objectList(QObject* child) { m_objectList.append(static_cast<SomeQObjectChild*>(child)); }
 
 public slots:
 	void setSomeInt(int someInt) { m_someInt = someInt; }
@@ -116,6 +119,10 @@ int main(int argc, char** argv)
         childObj.setObjectName(QStringLiteral("HELLO2"));
         childObj.setSomeString(QStringLiteral("SOME STRING"));
         SomeQObject someObj;
+		SomeQObjectChild* childObj2 = new SomeQObjectChild(&someObj);
+		childObj2->setSomeString("SOME STRING");
+		SomeQObjectChild* childObj3 = new SomeQObjectChild(&someObj);
+		childObj3->setSomeString("SOME STRING 2");
 		someObj.setSomeInt(7);
 		someObj.setSomeLong(std::numeric_limits<int>::max() + static_cast<qint64>(10));
 		someObj.setSomeBool(true);
@@ -123,12 +130,12 @@ int main(int argc, char** argv)
         someObj.setSomeString(QStringLiteral("HELLO"));
         someObj.setChild1(&childObj);
         someObj.setIntList(QList<int>()
-                           << 1 << 2 << 3);
+                           << 3 << 7 << 19);
         someObj.setStringList(QStringList()
                               << "A" << "B" << "C" << "D");
         someObj.setObjectList(QList<SomeQObjectChild*>()
-                              << new SomeQObjectChild(&someObj)
-                              << new SomeQObjectChild(&someObj));
+							  << childObj2
+							  << childObj3);
 
         LCSerializer serializer;
         QJsonObject json = serializer.serialize(&someObj);
@@ -148,7 +155,10 @@ int main(int argc, char** argv)
         qDebug() << "Deserialized:" << "\n"
                  << "Prop:" << res->someString() << "\n"
                  << "Prop child1:" << res->child1()->someString() << "\n"
-                 << "Child2:" << res->child2();
+                 << "Child2:" << res->child2() << "\n"
+                 << "Int:" << res->intList()[0] << res->intList()[1] << "\n"
+				 << "String:" << res->stringList()[0] << res->stringList()[1] << "\n"
+				 << "Object list:" << res->objectList()[0]->someString() << res->objectList()[1]->someString();
     }
 
     qDebug() << "DONE ;-)";
