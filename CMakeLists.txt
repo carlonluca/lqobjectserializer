@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(QObjectSerializer LANGUAGES CXX)
+project(LQObjectSerializer LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -13,8 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt5Core)
 
-add_executable(QObjectSerializer
+add_executable(LQObjectSerializer
     lcserializer.cpp
     main.cpp
     )
-target_link_libraries(QObjectSerializer Qt5::Core)
+target_link_libraries(LQObjectSerializer Qt5::Core)
