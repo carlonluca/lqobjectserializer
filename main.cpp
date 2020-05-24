@@ -4,7 +4,7 @@
 #include <QDebug>
 #include <QMetaObject>
 
-#include "lcserializer.h"
+#include "lserializer.h"
 
 class SomeQObjectChild2 : public QObject
 {

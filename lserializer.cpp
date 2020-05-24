@@ -1,4 +1,4 @@
-﻿#include "lcserializer.h"
+﻿#include "lserializer.h"
 
 LSerializer::LSerializer()
 {

@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt5Core)
 
 add_executable(LQObjectSerializer
-    lcserializer.cpp
+    lserializer.cpp
     main.cpp
     )
 target_link_libraries(LQObjectSerializer Qt5::Core)
