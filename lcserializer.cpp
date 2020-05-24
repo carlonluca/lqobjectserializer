@@ -1,16 +1,16 @@
 ﻿#include "lcserializer.h"
 
-LCSerializer::LCSerializer()
+LSerializer::LSerializer()
 {
 
 }
 
-QJsonObject LCSerializer::serialize(QObject* object)
+QJsonObject LSerializer::serialize(QObject* object)
 {
 	return !object ? QJsonObject() : serializeObject(object).toObject();
 }
 
-QJsonValue LCSerializer::serializeObject(QObject* object)
+QJsonValue LSerializer::serializeObject(QObject* object)
 {
 	QJsonObject json;
 
@@ -25,7 +25,7 @@ QJsonValue LCSerializer::serializeObject(QObject* object)
 	return json;
 }
 
-QJsonArray LCSerializer::serializeArray(const QSequentialIterable& it)
+QJsonArray LSerializer::serializeArray(const QSequentialIterable& it)
 {
 	QJsonArray ret;
 	for (const QVariant& variant: it)
@@ -33,7 +33,7 @@ QJsonArray LCSerializer::serializeArray(const QSequentialIterable& it)
 	return ret;
 }
 
-QJsonValue LCSerializer::serializeValue(const QVariant& value)
+QJsonValue LSerializer::serializeValue(const QVariant& value)
 {
 	if (value.canConvert<QVariantList>())
 		return serializeArray(value.value<QSequentialIterable>());

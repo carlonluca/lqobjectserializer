@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 							  << childObj2
 							  << childObj3);
 
-        LCSerializer serializer;
+		LSerializer serializer;
         QJsonObject json = serializer.serialize(&someObj);
         QJsonDocument doc(json);
 
@@ -149,8 +149,8 @@ int main(int argc, char** argv)
             { QStringLiteral("SomeQObjectChild2*"), SomeQObjectChild2::staticMetaObject }
         };
 
-        LCDeserializer<SomeQObject> deserializer(factory);
-        QSharedPointer<SomeQObject> res = deserializer.deserialize(json);
+		LDeserializer<SomeQObject> deserializer(factory);
+		QScopedPointer<SomeQObject> res(deserializer.deserialize(json));
 
         qDebug() << "Deserialized:" << "\n"
                  << "Prop:" << res->someString() << "\n"
