@@ -1,0 +1,3 @@
+[submodule "LQObjectSerializerTest/deps/lqtutils"]
+	path = LQObjectSerializerTest/deps/lqtutils
+	url = ../lqtutils.git

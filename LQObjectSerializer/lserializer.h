@@ -128,18 +128,8 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
             return jsonValue.toBool();
 		}));
 	else {
-		if (m_factory.contains(type)) {
-#if 0
-			return deserialize_array<QObject*>(array, [this, type] (const QJsonValue& jsonValue) -> QObject* {
-				// TODO: set parent.
-				qDebug() << type;
-				QObject* child = m_factory[type].newInstance();
-				deserializeJson(jsonValue.toObject(), child);
-				return child;
-			});
-#endif
+		if (m_factory.contains(type))
 			deserializeObjectArray(array, metaProp.name(), type, dest);
-		}
 		else
 			qWarning() << type << "is not known";
     }
