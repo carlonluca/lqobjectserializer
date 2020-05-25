@@ -6,7 +6,7 @@
 class SomeQObjectChild2 : public QObject
 {
     Q_OBJECT
-    L_RW_PROP(QString, someString, setSomeString)
+	L_RW_PROP(QString, someString, setSomeString, QString())
     public:
         Q_INVOKABLE SomeQObjectChild2(QObject* parent = nullptr) : QObject(parent) {}
     ~SomeQObjectChild2() { qDebug() << Q_FUNC_INFO; }
@@ -15,7 +15,7 @@ class SomeQObjectChild2 : public QObject
 class SomeQObjectChild : public QObject
 {
     Q_OBJECT
-    L_RW_PROP(QString, someString, setSomeString)
+	L_RW_PROP(QString, someString, setSomeString, QString())
     public:
         Q_INVOKABLE SomeQObjectChild(QObject* parent = nullptr) : QObject(parent) {}
     ~SomeQObjectChild() { qDebug() << Q_FUNC_INFO; }
@@ -24,16 +24,16 @@ class SomeQObjectChild : public QObject
 class SomeQObject : public QObject
 {
     Q_OBJECT
-    L_RW_PROP(int, someInt, setSomeInt)
-    L_RW_PROP(qint64, someLong, setSomeLong)
-    L_RW_PROP(bool, someBool, setSomeBool)
-    L_RW_PROP(double, someDouble, setSomeDouble)
-    L_RW_PROP(QString, someString, setSomeString)
-    L_RW_PROP(SomeQObjectChild*, child1, setChild1)
-    L_RW_PROP(SomeQObjectChild2*, child2, setChild2)
-    L_RW_PROP(QList<int>, intList, setIntList)
-    L_RW_PROP(QList<QString>, stringList, setStringList)
-    L_RW_PROP(QList<SomeQObjectChild*>, objectList, setObjectList)
+	L_RW_PROP(int, someInt, setSomeInt, 0)
+	L_RW_PROP(qint64, someLong, setSomeLong, 0)
+	L_RW_PROP(bool, someBool, setSomeBool, false)
+	L_RW_PROP(double, someDouble, setSomeDouble, 0)
+	L_RW_PROP(QString, someString, setSomeString, QString())
+	L_RW_PROP(SomeQObjectChild*, child1, setChild1, nullptr)
+	L_RW_PROP(SomeQObjectChild2*, child2, setChild2, nullptr)
+	L_RW_PROP(QList<int>, intList, setIntList, QList<int>())
+	L_RW_PROP(QList<QString>, stringList, setStringList, QList<QString>())
+	L_RW_PROP(QList<SomeQObjectChild*>, objectList, setObjectList, QList<SomeQObjectChild*>())
 public:
     Q_INVOKABLE SomeQObject(QObject* parent = nullptr) :
       QObject(parent), m_someInt(0), m_child1(nullptr), m_child2(nullptr) {}
@@ -107,6 +107,7 @@ void LQObjectSerializerTest::test_case1()
     QCOMPARE(res->someString(), QSL("HELLO"));
     QCOMPARE(res->child1()->someString(), QSL("SOME STRING"));
     QCOMPARE(res->child2(), nullptr);
+
 
     //qDebug() << "Deserialized:" << "\n"
     //         << "Prop:" << res->someString() << "\n"
