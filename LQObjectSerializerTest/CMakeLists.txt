@@ -24,4 +24,3 @@ add_executable(LQObjectSerializerTest
 add_test(NAME LQObjectSerializerTest COMMAND LQObjectSerializerTest)
 
 target_link_libraries(LQObjectSerializerTest PRIVATE Qt5::Test)
-
