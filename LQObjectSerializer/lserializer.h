@@ -20,38 +20,38 @@ class QObject;
 class LSerializer
 {
 public:
-	LSerializer();
+    LSerializer();
     QJsonObject serialize(QObject* object);
 
 protected:
-	QJsonValue serializeObject(QObject* value);
-	QJsonArray serializeArray(const QSequentialIterable &it);
-	QJsonValue serializeValue(const QVariant& value);
+    QJsonValue serializeObject(QObject* value);
+    QJsonArray serializeArray(const QSequentialIterable &it);
+    QJsonValue serializeValue(const QVariant& value);
 };
 
 template<class T>
 class LDeserializer
 {
 public:
-	LDeserializer(const QHash<QString, QMetaObject>& factory);
-	T* deserialize(const QJsonObject& json, QObject* parent = nullptr);
+    LDeserializer(const QHash<QString, QMetaObject>& factory);
+    T* deserialize(const QJsonObject& json, QObject* parent = nullptr);
 
 protected:
     void deserializeJson(QJsonObject json, QObject* object);
     void deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, QObject* dest);
-	void deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, QObject* dest);
-	void deserializeObjectArray(const QJsonArray& array, const QString& propName, const QString& type, QObject* dest);
+    void deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, QObject* dest);
+    void deserializeObjectArray(const QJsonArray& array, const QString& propName, const QString& type, QObject* dest);
 
 private:
     QHash<QString, QMetaObject> m_factory;
-	QRegularExpression m_arrayTypeRegex;
+    QRegularExpression m_arrayTypeRegex;
 };
 
 class LCArrayHolder : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	LCArrayHolder(QObject* parent = nullptr) : QObject(parent) {}
+    LCArrayHolder(QObject* parent = nullptr) : QObject(parent) {}
 };
 
 template<class T>
@@ -69,16 +69,16 @@ QVariant deserialize_array(const QJsonArray& array, std::function<T(const QJsonV
 
 template<class T>
 LDeserializer<T>::LDeserializer(const QHash<QString, QMetaObject>& factory) :
-	m_factory(factory),
-	m_arrayTypeRegex(QStringLiteral("^(QList)<([^\\*]+(\\*){0,1})>$"))
+    m_factory(factory),
+    m_arrayTypeRegex(QStringLiteral("^(QList)<([^\\*]+(\\*){0,1})>$"))
 {}
 
 template<class T>
 T* LDeserializer<T>::deserialize(const QJsonObject& json, QObject* parent)
 {
-	T* t = new T(parent);
+    T* t = new T(parent);
     deserializeJson(json, t);
-	return t;
+    return t;
 }
 
 template<class T>
@@ -98,43 +98,43 @@ void LDeserializer<T>::deserializeJson(QJsonObject json, QObject* object)
 template<class T>
 void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, QObject* dest)
 {
-	qDebug() << "Deserialize array:" << metaProp.typeName() << metaProp.name();
-	QRegularExpressionMatch match = m_arrayTypeRegex.match(metaProp.typeName());
-	if (!match.hasMatch()) {
-		qWarning() << "Failed to deserialize array with type:" << metaProp.typeName();
-		return;
-	}
-
-	QString container = match.captured(1);
-	QString type = match.captured(2);
-    if (type == QStringLiteral("int"))
-		dest->setProperty(metaProp.name(), deserialize_array<int>(array, [] (const QJsonValue& jsonValue) -> int {
-            return jsonValue.toInt();
-		}));
-	else if (type == QStringLiteral("long"))
-		dest->setProperty(metaProp.name(), deserialize_array<long>(array, [] (const QJsonValue& jsonValue) -> long {
-            return jsonValue.toInt();
-		}));
-	else if (type == QStringLiteral("float"))
-		qDebug() << "List of floats";
-	else if (type == QStringLiteral("double"))
-		qDebug() << "List of doubles";
-	else if (type == QStringLiteral("QString"))
-		dest->setProperty(metaProp.name(), deserialize_array<QString>(array, [] (const QJsonValue& jsonValue) -> QString {
-            return jsonValue.toString();
-		}));
-	else if (type == QStringLiteral("bool"))
-		dest->setProperty(metaProp.name(), deserialize_array<bool>(array, [] (const QJsonValue& jsonValue) -> bool {
-            return jsonValue.toBool();
-		}));
-	else {
-		if (m_factory.contains(type))
-			deserializeObjectArray(array, metaProp.name(), type, dest);
-		else
-			qWarning() << type << "is not known";
+    qDebug() << "Deserialize array:" << metaProp.typeName() << metaProp.name();
+    QRegularExpressionMatch match = m_arrayTypeRegex.match(metaProp.typeName());
+    if (!match.hasMatch()) {
+        qWarning() << "Failed to deserialize array with type:" << metaProp.typeName();
+        return;
     }
 
-	return;
+    QString container = match.captured(1);
+    QString type = match.captured(2);
+    if (type == QStringLiteral("int"))
+        dest->setProperty(metaProp.name(), deserialize_array<int>(array, [] (const QJsonValue& jsonValue) -> int {
+            return jsonValue.toInt();
+        }));
+    else if (type == QStringLiteral("long"))
+        dest->setProperty(metaProp.name(), deserialize_array<long>(array, [] (const QJsonValue& jsonValue) -> long {
+            return jsonValue.toInt();
+        }));
+    else if (type == QStringLiteral("float"))
+        qDebug() << "List of floats";
+    else if (type == QStringLiteral("double"))
+        qDebug() << "List of doubles";
+    else if (type == QStringLiteral("QString"))
+        dest->setProperty(metaProp.name(), deserialize_array<QString>(array, [] (const QJsonValue& jsonValue) -> QString {
+            return jsonValue.toString();
+        }));
+    else if (type == QStringLiteral("bool"))
+        dest->setProperty(metaProp.name(), deserialize_array<bool>(array, [] (const QJsonValue& jsonValue) -> bool {
+            return jsonValue.toBool();
+        }));
+    else {
+        if (m_factory.contains(type))
+            deserializeObjectArray(array, metaProp.name(), type, dest);
+        else
+            qWarning() << type << "is not known";
+    }
+
+    return;
 }
 
 template<class T>
@@ -149,13 +149,14 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         dest->setProperty(metaProp.name(), value.toBool());
         break;
     case QJsonValue::Double:
+        qDebug() << "Settings:" << metaProp.name() << value.toInt();
         dest->setProperty(metaProp.name(), value.toDouble());
         break;
     case QJsonValue::String:
         dest->setProperty(metaProp.name(), value.toString());
         break;
     case QJsonValue::Array:
-		deserializeArray(value.toArray(), metaProp, dest);
+        deserializeArray(value.toArray(), metaProp, dest);
         break;
     case QJsonValue::Object:
         QString className(metaProp.typeName());
@@ -172,22 +173,22 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
 template<class T>
 void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QString& propName, const QString& type, QObject* dest)
 {
-	QMetaMethod addMethod;
-	for (int i = 0; i < dest->metaObject()->methodCount(); i++)
-		if (dest->metaObject()->method(i).name() == QString("add_%1").arg(propName))
-			addMethod = dest->metaObject()->method(i);
-	if (!addMethod.isValid()) {
-		qWarning() << "Could not find add method";
-		return;
-	}
+    QMetaMethod addMethod;
+    for (int i = 0; i < dest->metaObject()->methodCount(); i++)
+        if (dest->metaObject()->method(i).name() == QString("add_%1").arg(propName))
+            addMethod = dest->metaObject()->method(i);
+    if (!addMethod.isValid()) {
+        qWarning() << "Could not find add method";
+        return;
+    }
 
-	QJsonArray::const_iterator it = array.constBegin();
-	while (it != array.constEnd()) {
-		QObject* child = m_factory[type].newInstance(Q_ARG(QObject*, dest));
-		deserializeJson((*it).toObject(), child);
-		addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, child));
-		++it;
-	}
+    QJsonArray::const_iterator it = array.constBegin();
+    while (it != array.constEnd()) {
+        QObject* child = m_factory[type].newInstance(Q_ARG(QObject*, dest));
+        deserializeJson((*it).toObject(), child);
+        addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, child));
+        ++it;
+    }
 }
 
 #endif // LCSERIALIZER_H
