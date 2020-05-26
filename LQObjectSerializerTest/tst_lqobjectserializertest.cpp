@@ -7,7 +7,7 @@ class SomeQObjectChild2 : public QObject
 {
     Q_OBJECT
     L_RW_PROP(QString, someString, setSomeString, QString())
-    public:
+public:
         Q_INVOKABLE SomeQObjectChild2(QObject* parent = nullptr) : QObject(parent) {}
     ~SomeQObjectChild2() { qDebug() << Q_FUNC_INFO; }
 };
