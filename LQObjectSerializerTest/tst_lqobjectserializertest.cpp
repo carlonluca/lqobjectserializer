@@ -25,7 +25,8 @@
 #include <QtTest>
 
 #include "../LQObjectSerializer/lserializer.h"
-#include "deps/lqtutils/lqtutils.h"
+#include "deps/lqtutils/lqtutils_prop.h"
+#include "deps/lqtutils/lqtutils_string.h"
 
 class SomeQObjectChild2 : public QObject
 {
@@ -176,8 +177,8 @@ LQObjectSerializerTest::~LQObjectSerializerTest()
 void LQObjectSerializerTest::test_case1()
 {
     SomeQObjectChild childObj;
-    childObj.setObjectName(QStringLiteral("HELLO2"));
-    childObj.setSomeString(QStringLiteral("SOME STRING"));
+    childObj.setObjectName(QSL("HELLO2"));
+    childObj.setSomeString(QSL("SOME STRING"));
     SomeQObject someObj;
     SomeQObjectChild* childObj2 = new SomeQObjectChild(&someObj);
     childObj2->setSomeString("SOME STRING");
