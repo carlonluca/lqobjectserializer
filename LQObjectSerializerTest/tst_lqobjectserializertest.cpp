@@ -8,7 +8,7 @@
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to do 9so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
@@ -48,7 +48,7 @@ class SomeQObjectChild : public QObject
 class SomeQObject : public QObject
 {
     Q_OBJECT
-    L_RW_PROP(int, someInt, setSomeInt)
+    L_RW_PROP(int, someInt, setSomeInt, 0)
     L_RW_PROP(qint64, someLong, setSomeLong, 0)
     L_RW_PROP(bool, someBool, setSomeBool, false)
     L_RW_PROP(double, someDouble, setSomeDouble, 0)
@@ -70,7 +70,7 @@ public slots:
 class GlossDefObj : public QObject
 {
     Q_OBJECT
-    L_RW_PROP(QString, para, setPara)
+    L_RW_PROP(QString, para, setPara, QString())
     L_RW_PROP(QList<QString>, GlossSeeAlso, setGlossSeeAlso)
 public:
     Q_INVOKABLE GlossDefObj(QObject* parent = nullptr) : QObject(parent) {}
@@ -93,7 +93,7 @@ public:
 class GlossListObj : public QObject
 {
     Q_OBJECT
-    L_RW_PROP(GlossEntryObj*, GlossEntry, setGlossEntry)
+    L_RW_PROP(GlossEntryObj*, GlossEntry, setGlossEntry, nullptr)
 public:
     Q_INVOKABLE GlossListObj(QObject* parent = nullptr) : QObject(parent) {}
 };
@@ -102,7 +102,7 @@ class GlossDivObj : public QObject
 {
     Q_OBJECT
     L_RW_PROP(QString, title, setTitle)
-    L_RW_PROP(GlossListObj*, GlossList, setGlossList)
+    L_RW_PROP(GlossListObj*, GlossList, setGlossList, nullptr)
 public:
     Q_INVOKABLE GlossDivObj(QObject* parent = nullptr) : QObject(parent) {}
 };
@@ -110,7 +110,7 @@ public:
 class Glossary : public QObject
 {
     Q_OBJECT
-    L_RW_PROP(QString, title, setTitle, QString())
+    L_RW_PROP(QString, title, setTitle)
     L_RW_PROP(GlossDivObj*, GlossDiv, setGlossDiv, nullptr)
 public:
     Q_INVOKABLE Glossary(QObject* parent = nullptr) : QObject(parent) {}
@@ -137,6 +137,34 @@ public:
 private slots:
     void test_case1();
     void test_case2();
+    void test_case3();
+};
+
+class Item : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(QString, id, setId, QString())
+    L_RW_PROP(QString, label, setLabel, QString())
+public:
+    Q_INVOKABLE Item(QObject* parent = nullptr) : QObject(parent) {}
+};
+
+class Menu : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(QString, header, setHeader)
+    L_RW_PROP(QList<Item*>, items, setItems)
+public:
+    Q_INVOKABLE Menu(QObject* parent = nullptr) : QObject(parent) {}
+    Q_INVOKABLE void add_items(QObject* obj) { m_items.append(static_cast<Item*>(obj)); }
+};
+
+class MenuRoot : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(Menu*, menu, setMenu, nullptr)
+public:
+    Q_INVOKABLE MenuRoot(QObject* parent = nullptr) : QObject(parent) {}
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -236,6 +264,32 @@ void LQObjectSerializerTest::test_case2()
     QCOMPARE(entry->GlossDef()->GlossSeeAlso().size(), 2);
     QCOMPARE(entry->GlossDef()->GlossSeeAlso()[0], QSL("GML"));
     QCOMPARE(entry->GlossDef()->GlossSeeAlso()[1], QSL("XML"));
+}
+
+void LQObjectSerializerTest::test_case3()
+{
+    QFile jsonFile(":/json_2.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    QByteArray jsonString = jsonFile.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(jsonString);
+    QJsonObject json = doc.object();
+    QVERIFY(!json.isEmpty());
+
+    QHash<QString, QMetaObject> factory {
+        { QSL("Item*"), Item::staticMetaObject },
+        { QSL("Menu*"), Menu::staticMetaObject }
+    };
+
+    LDeserializer<MenuRoot> deserializer(factory);
+    QScopedPointer<MenuRoot> g(deserializer.deserialize(json));
+    QVERIFY(g->menu() != nullptr);
+    QCOMPARE(g->menu()->items().size(), 22);
+    QCOMPARE(g->menu()->items().at(0)->id(), QSL("Open"));
+    QCOMPARE(g->menu()->items().at(0)->label(), QString());
+    QCOMPARE(g->menu()->items().at(1)->id(), QSL("OpenNew"));
+    QCOMPARE(g->menu()->items().at(1)->label(), QSL("Open New"));
+    QCOMPARE(g->menu()->items().at(2), nullptr);
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)

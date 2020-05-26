@@ -83,6 +83,8 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
         case QMetaType::Float:
         case QMetaType::Double:
             return QJsonValue(value.toDouble());
+        default:
+            break;
         }
     }
 

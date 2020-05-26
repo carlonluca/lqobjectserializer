@@ -217,9 +217,14 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
 
     QJsonArray::const_iterator it = array.constBegin();
     while (it != array.constEnd()) {
-        QObject* child = m_factory[type].newInstance(Q_ARG(QObject*, dest));
-        deserializeJson((*it).toObject(), child);
-        addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, child));
+        if ((*it).type() == QJsonValue::Null || (*it).type() == QJsonValue::Undefined)
+            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, nullptr));
+        else {
+            QObject* child = m_factory[type].newInstance(Q_ARG(QObject*, dest));
+            deserializeJson((*it).toObject(), child);
+            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, child));
+        }
+
         ++it;
     }
 }
