@@ -27,6 +27,7 @@
 
 #include <QByteArray>
 #include <QVariant>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QObject>
@@ -62,6 +63,7 @@ class LDeserializer
 public:
     LDeserializer(const QHash<QString, QMetaObject>& factory = QHash<QString, QMetaObject>());
     T* deserialize(const QJsonObject& json, QObject* parent = nullptr);
+    T* deserialize(const QString& jsonString, QObject* parent = nullptr);
 
 protected:
     void deserializeJson(QJsonObject json, QObject* object);
@@ -106,6 +108,14 @@ T* LDeserializer<T>::deserialize(const QJsonObject& json, QObject* parent)
     T* t = new T(parent);
     deserializeJson(json, t);
     return t;
+}
+
+template<class T>
+T* LDeserializer<T>::deserialize(const QString& jsonString, QObject *parent)
+{
+    QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8());
+    QJsonObject json = doc.object();
+    return deserialize(json, parent);
 }
 
 template<class T>

@@ -273,9 +273,6 @@ void LQObjectSerializerTest::test_case3()
     QVERIFY(jsonFile.open(QIODevice::ReadOnly));
 
     QByteArray jsonString = jsonFile.readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(jsonString);
-    QJsonObject json = doc.object();
-    QVERIFY(!json.isEmpty());
 
     QHash<QString, QMetaObject> factory {
         { QSL("Item*"), Item::staticMetaObject },
@@ -283,7 +280,7 @@ void LQObjectSerializerTest::test_case3()
     };
 
     LDeserializer<MenuRoot> deserializer(factory);
-    QScopedPointer<MenuRoot> g(deserializer.deserialize(json));
+    QScopedPointer<MenuRoot> g(deserializer.deserialize(jsonString));
     QVERIFY(g->menu() != nullptr);
     QCOMPARE(g->menu()->items().size(), 22);
     QCOMPARE(g->menu()->items().at(0)->id(), QSL("Open"));
@@ -294,7 +291,9 @@ void LQObjectSerializerTest::test_case3()
 
     LSerializer serializer;
     QJsonObject obj = serializer.serialize(g.data());
-    qDebug().noquote() << QJsonDocument(obj).toJson();
+    QJsonDocument doc = QJsonDocument::fromJson(jsonString);
+    QJsonObject json = doc.object();
+    qDebug().noquote() << json;
     QCOMPARE(obj, json);
 }
 
