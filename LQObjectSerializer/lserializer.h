@@ -9,11 +9,14 @@
 #include <QMetaObject>
 #include <QMetaProperty>
 #include <QRegularExpression>
+#include <QLoggingCategory>
 #ifdef QT_DEBUG
 #include <QDebug>
 #endif
 
 #include <optional>
+
+Q_DECLARE_LOGGING_CATEGORY(lserializer)
 
 class QObject;
 
@@ -33,7 +36,7 @@ template<class T>
 class LDeserializer
 {
 public:
-    LDeserializer(const QHash<QString, QMetaObject>& factory);
+    LDeserializer(const QHash<QString, QMetaObject>& factory = QHash<QString, QMetaObject>());
     T* deserialize(const QJsonObject& json, QObject* parent = nullptr);
 
 protected:
@@ -160,6 +163,12 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         break;
     case QJsonValue::Object:
         QString className(metaProp.typeName());
+        if (!m_factory.contains(className)) {
+            qCDebug(lserializer) << "Factory does not contain class name:"
+                                 << className;
+            break;
+        }
+
         QObject* child = m_factory[className].newInstance(Q_ARG(QObject*, dest));
         dest->setProperty(metaProp.name(), QVariant::fromValue<QObject*>(child));
         deserializeJson(value.toObject(), child);

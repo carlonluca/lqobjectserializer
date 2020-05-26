@@ -1,5 +1,7 @@
 ﻿#include "lserializer.h"
 
+Q_LOGGING_CATEGORY(lserializer, "lserializer")
+
 LSerializer::LSerializer()
 {
 

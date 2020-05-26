@@ -43,6 +43,63 @@ public slots:
     void add_objectList(QObject* child) { m_objectList.append(static_cast<SomeQObjectChild*>(child)); }
 };
 
+class GlossDefObj : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(QString, para, setPara)
+    L_RW_PROP(QList<QString>, GlossSeeAlso, setGlossSeeAlso)
+public:
+    Q_INVOKABLE GlossDefObj(QObject* parent = nullptr) : QObject(parent) {}
+};
+
+class GlossEntryObj : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(QString, ID, setID)
+    L_RW_PROP(QString, SortAs, setSortAs)
+    L_RW_PROP(QString, GlossTerm, setGlossTerm)
+    L_RW_PROP(QString, Acronym, setAcronym)
+    L_RW_PROP(QString, Abbrev, setAbbrev)
+    L_RW_PROP(QString, GlossSee, setGlossSee)
+    L_RW_PROP(GlossDefObj*, GlossDef, setGlossDef)
+public:
+    Q_INVOKABLE GlossEntryObj(QObject* parent = nullptr) : QObject(parent) {}
+};
+
+class GlossListObj : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(GlossEntryObj*, GlossEntry, setGlossEntry)
+public:
+    Q_INVOKABLE GlossListObj(QObject* parent = nullptr) : QObject(parent) {}
+};
+
+class GlossDivObj : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(QString, title, setTitle)
+    L_RW_PROP(GlossListObj*, GlossList, setGlossList)
+public:
+    Q_INVOKABLE GlossDivObj(QObject* parent = nullptr) : QObject(parent) {}
+};
+
+class Glossary : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(QString, title, setTitle, QString())
+    L_RW_PROP(GlossDivObj*, GlossDiv, setGlossDiv, nullptr)
+public:
+    Q_INVOKABLE Glossary(QObject* parent = nullptr) : QObject(parent) {}
+};
+
+class GlossaryRoot : public QObject
+{
+    Q_OBJECT
+    L_RW_PROP(Glossary*, glossary, setGlossary, nullptr)
+public:
+    Q_INVOKABLE GlossaryRoot(QObject* parent = nullptr) : QObject(parent) {}
+};
+
 Q_DECLARE_METATYPE(SomeQObject*);
 Q_DECLARE_METATYPE(SomeQObjectChild*);
 
@@ -120,7 +177,41 @@ void LQObjectSerializerTest::test_case1()
 
 void LQObjectSerializerTest::test_case2()
 {
+    QFile jsonFile(":/json_1.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
 
+    QByteArray jsonString = jsonFile.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(jsonString);
+    QJsonObject json = doc.object();
+    QVERIFY(!json.isEmpty());
+
+    QHash<QString, QMetaObject> factory {
+        { QSL("Glossary*"), Glossary::staticMetaObject },
+        { QSL("GlossDivObj*"), GlossDivObj::staticMetaObject },
+        { QSL("GlossListObj*"), GlossListObj::staticMetaObject },
+        { QSL("GlossEntryObj*"), GlossEntryObj::staticMetaObject },
+        { QSL("GlossDefObj*"), GlossDefObj::staticMetaObject }
+    };
+
+    LDeserializer<GlossaryRoot> deserializer(factory);
+    QScopedPointer<GlossaryRoot> g(deserializer.deserialize(json));
+    QVERIFY(g->glossary() != nullptr);
+    QVERIFY(g->glossary()->GlossDiv() != nullptr);
+    QVERIFY(g->glossary()->GlossDiv()->GlossList() != nullptr);
+    QVERIFY(g->glossary()->GlossDiv()->GlossList()->GlossEntry() != nullptr);
+
+    GlossEntryObj* entry = g->glossary()->GlossDiv()->GlossList()->GlossEntry();
+    QCOMPARE(g->glossary()->title(), QSL("example glossary"));
+    QCOMPARE(g->glossary()->GlossDiv()->title(), QSL("S"));
+    QCOMPARE(entry->ID(), QSL("SGML"));
+    QCOMPARE(entry->SortAs(), QSL("SGML"));
+    QCOMPARE(entry->GlossTerm(), QSL("Standard Generalized Markup Language"));
+    QCOMPARE(entry->Acronym(), QSL("SGML"));
+    QCOMPARE(entry->Abbrev(), QSL("ISO 8879:1986"));
+    QCOMPARE(entry->GlossDef()->para(), QSL("A meta-markup language, used to create markup languages such as DocBook."));
+    QCOMPARE(entry->GlossDef()->GlossSeeAlso().size(), 2);
+    QCOMPARE(entry->GlossDef()->GlossSeeAlso()[0], QSL("GML"));
+    QCOMPARE(entry->GlossDef()->GlossSeeAlso()[1], QSL("XML"));
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)
