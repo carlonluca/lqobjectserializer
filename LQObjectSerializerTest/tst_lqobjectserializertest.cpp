@@ -291,6 +291,11 @@ void LQObjectSerializerTest::test_case3()
     QCOMPARE(g->menu()->items().at(1)->id(), QSL("OpenNew"));
     QCOMPARE(g->menu()->items().at(1)->label(), QSL("Open New"));
     QCOMPARE(g->menu()->items().at(2), nullptr);
+
+    LSerializer serializer;
+    QJsonObject obj = serializer.serialize(g.data());
+    qDebug().noquote() << QJsonDocument(obj).toJson();
+    QCOMPARE(obj, json);
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)

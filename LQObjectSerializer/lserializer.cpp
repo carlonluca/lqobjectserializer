@@ -41,7 +41,7 @@ QJsonValue LSerializer::serializeObject(QObject* object)
     QJsonObject json;
 
     const QMetaObject* metaObj = object->metaObject();
-    for (int i = 0; i < metaObj->propertyCount(); ++i) {
+    for (int i = metaObj->propertyOffset(); i < metaObj->propertyCount(); ++i) {
         const char* propertyName = metaObj->property(i).name();
         QVariant value = object->property(propertyName);
         QJsonValue jsonValue = serializeValue(value);
@@ -61,9 +61,11 @@ QJsonArray LSerializer::serializeArray(const QSequentialIterable& it)
 
 QJsonValue LSerializer::serializeValue(const QVariant& value)
 {
+    if (value.isNull())
+        return QJsonValue::Undefined;
     if (value.canConvert<QVariantList>())
         return serializeArray(value.value<QSequentialIterable>());
-    else if (value.canConvert<QObject*>()) {
+    if (value.canConvert<QObject*>()) {
         if (!value.value<QObject*>())
             return QJsonValue::Null;
         else
@@ -72,7 +74,7 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     else {
         switch (static_cast<QMetaType::Type>(value.type())) {
         case QMetaType::QString:
-            return QJsonValue(value.value<QString>());
+            return QJsonValue(value.toString());
         case QMetaType::Int:
         case QMetaType::UInt:
         case QMetaType::Long:
