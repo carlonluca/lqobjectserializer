@@ -81,4 +81,6 @@ LSerializer serializer;
 QJsonObject obj = serializer.serialize(mr.data());
 ```
 ## What is missing?
-Most of the library is in place. Bugs are more than likely though. Most types are supported, but some are still missing. Also, you won't be able to deserialize nested arrays.
+* Bugs are more than likely.
+* Most types are supported, but something is still missing.
+* No support for nested arrays.
