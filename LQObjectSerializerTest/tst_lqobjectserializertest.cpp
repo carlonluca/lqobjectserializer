@@ -28,105 +28,61 @@
 #include "deps/lqtutils/lqtutils_prop.h"
 #include "deps/lqtutils/lqtutils_string.h"
 
-class SomeQObjectChild2 : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, someString, setSomeString, QString())
-public:
-        Q_INVOKABLE SomeQObjectChild2(QObject* parent = nullptr) : QObject(parent) {}
-    ~SomeQObjectChild2() { qDebug() << Q_FUNC_INFO; }
-};
+L_BEGIN_CLASS(SomeQObjectChild2)
+L_RW_PROP(QString, someString, setSomeString, QString())
+L_END_CLASS
 
-class SomeQObjectChild : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, someString, setSomeString, QString())
-    public:
-        Q_INVOKABLE SomeQObjectChild(QObject* parent = nullptr) : QObject(parent) {}
-    ~SomeQObjectChild() { qDebug() << Q_FUNC_INFO; }
-};
+L_BEGIN_CLASS(SomeQObjectChild)
+L_RW_PROP(QString, someString, setSomeString, QString())
+L_END_CLASS
 
-class SomeQObject : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(int, someInt, setSomeInt, 0)
-    L_RW_PROP(qint64, someLong, setSomeLong, 0)
-    L_RW_PROP(bool, someBool, setSomeBool, false)
-    L_RW_PROP(double, someDouble, setSomeDouble, 0)
-    L_RW_PROP(QString, someString, setSomeString, QString())
-    L_RW_PROP(SomeQObjectChild*, child1, setChild1, nullptr)
-    L_RW_PROP(SomeQObjectChild2*, child2, setChild2, nullptr)
-    L_RW_PROP(QList<int>, intList, setIntList, QList<int>())
-    L_RW_PROP(QList<QString>, stringList, setStringList, QList<QString>())
-    L_RW_PROP(QList<SomeQObjectChild*>, objectList, setObjectList, QList<SomeQObjectChild*>())
-public:
-    Q_INVOKABLE SomeQObject(QObject* parent = nullptr) :
-      QObject(parent), m_someInt(0), m_child1(nullptr), m_child2(nullptr) {}
-    ~SomeQObject() { qDebug() << Q_FUNC_INFO; }
-
+L_BEGIN_CLASS(SomeQObject)
+L_RW_PROP(int, someInt, setSomeInt, 0)
+L_RW_PROP(qint64, someLong, setSomeLong, 0)
+L_RW_PROP(bool, someBool, setSomeBool, false)
+L_RW_PROP(double, someDouble, setSomeDouble, 0)
+L_RW_PROP(QString, someString, setSomeString, QString())
+L_RW_PROP(SomeQObjectChild*, child1, setChild1, nullptr)
+L_RW_PROP(SomeQObjectChild2*, child2, setChild2, nullptr)
+L_RW_PROP(QList<int>, intList, setIntList, QList<int>())
+L_RW_PROP(QList<QString>, stringList, setStringList, QList<QString>())
+L_RW_PROP(QList<SomeQObjectChild*>, objectList, setObjectList, QList<SomeQObjectChild*>())
 public slots:
     void add_objectList(QObject* child) { m_objectList.append(static_cast<SomeQObjectChild*>(child)); }
-};
+L_END_CLASS
 
-class GlossDefObj : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, para, setPara, QString())
-    L_RW_PROP(QList<QString>, GlossSeeAlso, setGlossSeeAlso)
-public:
-    Q_INVOKABLE GlossDefObj(QObject* parent = nullptr) : QObject(parent) {}
-};
+L_BEGIN_CLASS(GlossDefObj)
+L_RW_PROP(QString, para, setPara, QString())
+L_RW_PROP(QList<QString>, GlossSeeAlso, setGlossSeeAlso)
+L_END_CLASS
 
-class GlossEntryObj : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, ID, setID)
-    L_RW_PROP(QString, SortAs, setSortAs)
-    L_RW_PROP(QString, GlossTerm, setGlossTerm)
-    L_RW_PROP(QString, Acronym, setAcronym)
-    L_RW_PROP(QString, Abbrev, setAbbrev)
-    L_RW_PROP(QString, GlossSee, setGlossSee)
-    L_RW_PROP(GlossDefObj*, GlossDef, setGlossDef)
-public:
-    Q_INVOKABLE GlossEntryObj(QObject* parent = nullptr) : QObject(parent) {}
-};
+L_BEGIN_CLASS(GlossEntryObj)
+L_RW_PROP(QString, ID, setID)
+L_RW_PROP(QString, SortAs, setSortAs)
+L_RW_PROP(QString, GlossTerm, setGlossTerm)
+L_RW_PROP(QString, Acronym, setAcronym)
+L_RW_PROP(QString, Abbrev, setAbbrev)
+L_RW_PROP(QString, GlossSee, setGlossSee)
+L_RW_PROP(GlossDefObj*, GlossDef, setGlossDef)
+L_END_CLASS
 
-class GlossListObj : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(GlossEntryObj*, GlossEntry, setGlossEntry, nullptr)
-public:
-    Q_INVOKABLE GlossListObj(QObject* parent = nullptr) : QObject(parent) {}
-};
+L_BEGIN_CLASS(GlossListObj)
+L_RW_PROP(GlossEntryObj*, GlossEntry, setGlossEntry, nullptr)
+L_END_CLASS
 
-class GlossDivObj : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, title, setTitle)
-    L_RW_PROP(GlossListObj*, GlossList, setGlossList, nullptr)
-public:
-    Q_INVOKABLE GlossDivObj(QObject* parent = nullptr) : QObject(parent) {}
-};
+L_BEGIN_CLASS(GlossDivObj)
+L_RW_PROP(QString, title, setTitle)
+L_RW_PROP(GlossListObj*, GlossList, setGlossList, nullptr)
+L_END_CLASS
 
-class Glossary : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, title, setTitle)
-    L_RW_PROP(GlossDivObj*, GlossDiv, setGlossDiv, nullptr)
-public:
-    Q_INVOKABLE Glossary(QObject* parent = nullptr) : QObject(parent) {}
-};
+L_BEGIN_CLASS(Glossary)
+L_RW_PROP(QString, title, setTitle)
+L_RW_PROP(GlossDivObj*, GlossDiv, setGlossDiv, nullptr)
+L_END_CLASS
 
-class GlossaryRoot : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(Glossary*, glossary, setGlossary, nullptr)
-public:
-    Q_INVOKABLE GlossaryRoot(QObject* parent = nullptr) : QObject(parent) {}
-};
-
-Q_DECLARE_METATYPE(SomeQObject*);
-Q_DECLARE_METATYPE(SomeQObjectChild*);
+L_BEGIN_CLASS(GlossaryRoot)
+L_RW_PROP(Glossary*, glossary, setGlossary, nullptr)
+L_END_CLASS
 
 class LQObjectSerializerTest : public QObject
 {
