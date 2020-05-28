@@ -84,6 +84,22 @@ L_BEGIN_CLASS(GlossaryRoot)
 L_RW_PROP(Glossary*, glossary, setGlossary, nullptr)
 L_END_CLASS
 
+L_BEGIN_CLASS(Item)
+L_RW_PROP(QString, id, setId, QString())
+L_RW_PROP(QString, label, setLabel, QString())
+L_END_CLASS
+
+L_BEGIN_CLASS(Menu)
+L_RW_PROP(QString, header, setHeader)
+L_RW_PROP(QList<Item*>, items, setItems)
+public:
+    Q_INVOKABLE void add_items(QObject* obj) { m_items.append(static_cast<Item*>(obj)); }
+L_END_CLASS
+
+L_BEGIN_CLASS(MenuRoot)
+L_RW_PROP(Menu*, menu, setMenu, nullptr)
+L_END_CLASS
+
 class LQObjectSerializerTest : public QObject
 {
     Q_OBJECT
@@ -95,33 +111,6 @@ private slots:
     void test_case1();
     void test_case2();
     void test_case3();
-};
-
-class Item : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, id, setId, QString())
-    L_RW_PROP(QString, label, setLabel, QString())
-public:
-    Q_INVOKABLE Item(QObject* parent = nullptr) : QObject(parent) {}
-};
-
-class Menu : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(QString, header, setHeader)
-    L_RW_PROP(QList<Item*>, items, setItems)
-public:
-    Q_INVOKABLE Menu(QObject* parent = nullptr) : QObject(parent) {}
-    Q_INVOKABLE void add_items(QObject* obj) { m_items.append(static_cast<Item*>(obj)); }
-};
-
-class MenuRoot : public QObject
-{
-    Q_OBJECT
-    L_RW_PROP(Menu*, menu, setMenu, nullptr)
-public:
-    Q_INVOKABLE MenuRoot(QObject* parent = nullptr) : QObject(parent) {}
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
