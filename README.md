@@ -72,6 +72,7 @@ QHash<QString, QMetaObject> factory {
     { QSL("Menu*"), Menu::staticMetaObject }
 };
 ```
+When you want to have an array of QObject subclasses, you'll need to provide a add function. The name of the add function must be "add_" + the name of the array.
 The L_RW_PROP is a macro defined in the lqtutils submodule. If the class is only intended as a container of data, you can synthetize even more using the L_BEGIN_CLASS and L_END_CLASS macros from lqtutils. The result would be:
 ```
 L_BEGIN_CLASS(Item)
