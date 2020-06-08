@@ -41,7 +41,19 @@
 
 #include <optional>
 
+#include "../deps/lqtutils/lqtutils_prop.h"
+
 Q_DECLARE_LOGGING_CATEGORY(lserializer)
+
+#define L_RW_PROP_ARRAY_WITH_ADDER(type, name, setter)                                 \
+    L_RW_PROP3(QList<type>, name, setter)                                              \
+    public:                                                                            \
+    Q_INVOKABLE void add_##name(QObject* o) { m_##name.append(static_cast<type>(o)); }
+
+#define L_RO_PROP_ARRAY_WITH_ADDER(type, name, setter)                                 \
+    L_RO_PROP3(QList<type>, name, setter)                                              \
+    public:                                                                            \
+    Q_INVOKABLE void add_##name(QObject* o) { m_##name.append(static_cast<type>(o)); }
 
 class QObject;
 
@@ -67,9 +79,16 @@ public:
 
 protected:
     void deserializeJson(QJsonObject json, QObject* object);
-    void deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, QObject* dest);
-    void deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, QObject* dest);
-    void deserializeObjectArray(const QJsonArray& array, const QString& propName, const QString& type, QObject* dest);
+    void deserializeValue(const QJsonValue& value,
+                          const QMetaProperty& metaProp,
+                          QObject* dest);
+    void deserializeArray(const QJsonArray& array,
+                          const QMetaProperty& metaProp,
+                          QObject* dest);
+    void deserializeObjectArray(const QJsonArray& array,
+                                const QString& propName,
+                                const QString& type,
+                                QObject* dest);
 
 private:
     QHash<QString, QMetaObject> m_factory;

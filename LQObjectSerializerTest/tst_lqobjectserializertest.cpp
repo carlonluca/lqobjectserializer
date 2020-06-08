@@ -25,8 +25,7 @@
 #include <QtTest>
 
 #include "../LQObjectSerializer/lserializer.h"
-#include "deps/lqtutils/lqtutils_prop.h"
-#include "deps/lqtutils/lqtutils_string.h"
+#include "../deps/lqtutils/lqtutils_string.h"
 
 L_BEGIN_CLASS(SomeQObjectChild2)
 L_RW_PROP(QString, someString, setSomeString, QString())
@@ -46,9 +45,7 @@ L_RW_PROP(SomeQObjectChild*, child1, setChild1, nullptr)
 L_RW_PROP(SomeQObjectChild2*, child2, setChild2, nullptr)
 L_RW_PROP(QList<int>, intList, setIntList, QList<int>())
 L_RW_PROP(QList<QString>, stringList, setStringList, QList<QString>())
-L_RW_PROP(QList<SomeQObjectChild*>, objectList, setObjectList, QList<SomeQObjectChild*>())
-public slots:
-    void add_objectList(QObject* child) { m_objectList.append(static_cast<SomeQObjectChild*>(child)); }
+L_RW_PROP_ARRAY_WITH_ADDER(SomeQObjectChild*, objectList, setObjectList)
 L_END_CLASS
 
 L_BEGIN_CLASS(GlossDefObj)
@@ -91,9 +88,7 @@ L_END_CLASS
 
 L_BEGIN_CLASS(Menu)
 L_RW_PROP(QString, header, setHeader)
-L_RW_PROP(QList<Item*>, items, setItems)
-public:
-    Q_INVOKABLE void add_items(QObject* obj) { m_items.append(static_cast<Item*>(obj)); }
+L_RW_PROP_ARRAY_WITH_ADDER(Item*, items, setItems)
 L_END_CLASS
 
 L_BEGIN_CLASS(MenuRoot)
