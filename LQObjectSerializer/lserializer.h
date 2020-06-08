@@ -50,11 +50,6 @@ Q_DECLARE_LOGGING_CATEGORY(lserializer)
     public:                                                                            \
     Q_INVOKABLE void add_##name(QObject* o) { m_##name.append(static_cast<type>(o)); }
 
-#define L_RO_PROP_ARRAY_WITH_ADDER(type, name, setter)                                 \
-    L_RO_PROP3(QList<type>, name, setter)                                              \
-    public:                                                                            \
-    Q_INVOKABLE void add_##name(QObject* o) { m_##name.append(static_cast<type>(o)); }
-
 class QObject;
 
 class LSerializer
