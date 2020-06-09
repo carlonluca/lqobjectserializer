@@ -73,7 +73,7 @@ QHash<QString, QMetaObject> factory {
 };
 ```
 When you want to have an array of QObject subclasses, you'll need to provide a add function. The name of the add function must be "add_" + the name of the array.
-The L_RW_PROP is a macro defined in the lqtutils submodule. If the class is only intended as a container of data, you can synthetize even more using the L_BEGIN_CLASS and L_END_CLASS macros from lqtutils. The result would be:
+The L_RW_PROP is a macro defined in the lqtutils submodule. If the class is only intended as a container of data, you can synthesize even more using the L_BEGIN_CLASS and L_END_CLASS macros from lqtutils. The result would be:
 ```
 L_BEGIN_CLASS(Item)
 L_RW_PROP(QString, id, setId, QString())
@@ -85,6 +85,22 @@ L_RW_PROP(QString, header, setHeader)
 L_RW_PROP(QList<Item*>, items, setItems)
 public:
     Q_INVOKABLE void add_items(QObject* obj) { m_items.append(static_cast<Item*>(obj)); }
+L_END_CLASS
+
+L_BEGIN_CLASS(MenuRoot)
+L_RW_PROP(Menu*, menu, setMenu, nullptr)
+L_END_CLASS
+```
+Writing a add_ function may be bothering, so I added the macro L_RW_PROP_ARRAY_WITH_ADDER, which summarizes everything. The final result would be:
+```
+L_BEGIN_CLASS(Item)
+L_RW_PROP(QString, id, setId, QString())
+L_RW_PROP(QString, label, setLabel, QString())
+L_END_CLASS
+
+L_BEGIN_CLASS(Menu)
+L_RW_PROP(QString, header, setHeader)
+L_RW_PROP_ARRAY_WITH_ADDER(Item*, items, setItems)
 L_END_CLASS
 
 L_BEGIN_CLASS(MenuRoot)

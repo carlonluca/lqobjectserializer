@@ -27,9 +27,7 @@
 Q_LOGGING_CATEGORY(lserializer, "lserializer")
 
 LSerializer::LSerializer()
-{
-
-}
+{}
 
 QJsonObject LSerializer::serialize(QObject* object)
 {
