@@ -39,8 +39,6 @@
 #include <QDebug>
 #endif
 
-#include <optional>
-
 #include "../deps/lqtutils/lqtutils_prop.h"
 
 Q_DECLARE_LOGGING_CATEGORY(lserializer)
