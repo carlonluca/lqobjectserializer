@@ -95,6 +95,18 @@ L_BEGIN_CLASS(MenuRoot)
 L_RW_PROP(Menu*, menu, setMenu, nullptr)
 L_END_CLASS
 
+L_BEGIN_CLASS(FMoreInfo)
+L_RW_PROP(QString, gps, setGps)
+L_RW_PROP(bool, valid, setValid)
+L_END_CLASS
+
+L_BEGIN_CLASS(FPersonInfo)
+L_RW_PROP(QString, name, setName)
+L_RW_PROP(int, age, setAge)
+L_RW_PROP(QList<int>, identifiers, setIdentifiers)
+L_RW_PROP(FMoreInfo*, more, setMore)
+L_END_CLASS
+
 class LQObjectSerializerTest : public QObject
 {
     Q_OBJECT
@@ -106,6 +118,7 @@ private slots:
     void test_case1();
     void test_case2();
     void test_case3();
+    void test_case4();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -235,6 +248,30 @@ void LQObjectSerializerTest::test_case3()
     QJsonObject json = doc.object();
     qDebug().noquote() << json;
     QCOMPARE(obj, json);
+}
+
+void LQObjectSerializerTest::test_case4()
+{
+    QFile jsonFile(":/json_3.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    QByteArray jsonString = jsonFile.readAll();
+
+    QHash<QString, QMetaObject> factory {
+        { QSL("FMoreInfo*"), FMoreInfo::staticMetaObject },
+        { QSL("FPersonInfo*"), FPersonInfo::staticMetaObject }
+    };
+
+    LDeserializer<FPersonInfo> deserializer(factory);
+    QScopedPointer<FPersonInfo> g(deserializer.deserialize(jsonString));
+    QVERIFY(g);
+    QCOMPARE(g->age(), 33);
+    QCOMPARE(g->name(), "Andrew");
+    QCOMPARE(g->identifiers().size(), 4);
+    QCOMPARE(g->identifiers(), QList<int>() << 32 << 45 << 67 << 78);
+    QVERIFY(g->more());
+    QVERIFY(g->more()->valid());
+    QCOMPARE(g->more()->gps(), QSL("44.9064', W073° 59.0735'"));
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)

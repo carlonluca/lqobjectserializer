@@ -1,0 +1,9 @@
+{
+  "name": "Andrew",
+  "age": 33,
+  "identifiers": [32, 45, 67, 78],
+  "more": {
+     "gps": "44.9064', W073° 59.0735'",
+     "valid": true
+  }
+}
