@@ -92,28 +92,3 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
 
     return QJsonValue();
 }
-
-LRegister& LRegister::instance()
-{
-    static LRegister _instance;
-    return _instance;
-}
-
-bool LRegister::contains(const QString &name)
-{
-    QMutexLocker locker(&m_mutex);
-    return m_register.contains(name);
-}
-
-bool LRegister::registerType(const QMetaObject& metaObject)
-{
-    QMutexLocker locker(&m_mutex);
-    m_register.insert(QString("%1*").arg(metaObject.className()), metaObject);
-    return true;
-}
-
-const QMetaObject& LRegister::metaObject(const QString &name)
-{
-    QMutexLocker locker(&m_mutex);
-    return m_register[name];
-}

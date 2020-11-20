@@ -51,19 +51,6 @@ Q_DECLARE_LOGGING_CATEGORY(lserializer)
 
 class QObject;
 
-class LRegister
-{
-public:
-    static LRegister& instance();
-    bool contains(const QString& name);
-    bool registerType(const QMetaObject& metaObject);
-    const QMetaObject& metaObject(const QString& name);
-
-private:
-    QMutex m_mutex;
-    QHash<QString, QMetaObject> m_register;
-};
-
 class LSerializer
 {
 public:
@@ -104,7 +91,6 @@ private:
 
 private:
     QRegularExpression m_arrayTypeRegex;
-    LRegister& m_register;
 };
 
 class LCArrayHolder : public QObject
@@ -130,7 +116,6 @@ QVariant deserialize_array(const QJsonArray& array, std::function<T(const QJsonV
 template<class T>
 LDeserializer<T>::LDeserializer() :
     m_arrayTypeRegex(QStringLiteral("^(QList)<([^\\*]+(\\*){0,1})>$"))
-  , m_register(LRegister::instance())
 {}
 
 template<class T>
@@ -196,7 +181,7 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
             return jsonValue.toBool();
         }));
     else {
-        if (m_register.contains(type))
+        if (QMetaType::type(type.toLatin1().data()) != QMetaType::UnknownType)
             deserializeObjectArray(array, metaProp.name(), type, dest);
         else
             qWarning() << type << "is not known";
@@ -227,14 +212,16 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         deserializeArray(value.toArray(), metaProp, dest);
         break;
     case QJsonValue::Object:
-        QString className(metaProp.typeName());
-        if (!m_register.contains(className)) {
-            qCDebug(lserializer) << "Factory does not contain class name:"
+        const char* className = metaProp.typeName();
+        int typeId = QMetaType::type(metaProp.typeName());
+        if (typeId == QMetaType::UnknownType) {
+            qCDebug(lserializer) << "Class not registered:"
                                  << className;
             break;
         }
 
-        QObject* child = m_register.metaObject(className).newInstance(Q_ARG(QObject*, dest));
+        const QMetaObject* metaObject = QMetaType::metaObjectForType(typeId);
+        QObject* child = metaObject->newInstance(Q_ARG(QObject*, dest));
         dest->setProperty(metaProp.name(), QVariant::fromValue<QObject*>(child));
         deserializeJson(value.toObject(), child);
 
@@ -261,7 +248,14 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
         if ((*it).type() == QJsonValue::Null || (*it).type() == QJsonValue::Undefined)
             addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, nullptr));
         else {
-            QObject* child = m_register.metaObject(type).newInstance(Q_ARG(QObject*, dest));
+            int itype = QMetaType::type(type.toLatin1());
+            if (itype == QMetaType::UnknownType) {
+                qCDebug(lserializer) << "Class not registered:"
+                                     << propName;
+                break;
+            }
+
+            QObject* child = QMetaType::metaObjectForType(itype)->newInstance(Q_ARG(QObject*, dest));
             deserializeJson((*it).toObject(), child);
             addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, child));
         }

@@ -123,18 +123,18 @@ private slots:
 
 LQObjectSerializerTest::LQObjectSerializerTest()
 {
-    LRegister::instance().registerType(SomeQObject::staticMetaObject);
-    LRegister::instance().registerType(SomeQObjectChild::staticMetaObject);
-    LRegister::instance().registerType(SomeQObjectChild2::staticMetaObject);
-    LRegister::instance().registerType(Glossary::staticMetaObject);
-    LRegister::instance().registerType(GlossDivObj::staticMetaObject);
-    LRegister::instance().registerType(GlossListObj::staticMetaObject);
-    LRegister::instance().registerType(GlossEntryObj::staticMetaObject);
-    LRegister::instance().registerType(GlossDefObj::staticMetaObject);
-    LRegister::instance().registerType(Item::staticMetaObject);
-    LRegister::instance().registerType(Menu::staticMetaObject);
-    LRegister::instance().registerType(FMoreInfo::staticMetaObject);
-    LRegister::instance().registerType(FPersonInfo::staticMetaObject);
+    qRegisterMetaType<SomeQObject*>();
+    qRegisterMetaType<SomeQObjectChild*>();
+    qRegisterMetaType<SomeQObjectChild2*>();
+    qRegisterMetaType<Glossary*>();
+    qRegisterMetaType<GlossDivObj*>();
+    qRegisterMetaType<GlossListObj*>();
+    qRegisterMetaType<GlossEntryObj*>();
+    qRegisterMetaType<GlossDefObj*>();
+    qRegisterMetaType<Item*>();
+    qRegisterMetaType<Menu*>();
+    qRegisterMetaType<FMoreInfo*>();
+    qRegisterMetaType<FPersonInfo*>();
 }
 
 LQObjectSerializerTest::~LQObjectSerializerTest()
@@ -193,18 +193,13 @@ void LQObjectSerializerTest::test_case2()
     QFile jsonFile(":/json_1.json");
     QVERIFY(jsonFile.open(QIODevice::ReadOnly));
 
+    new GlossaryRoot(qApp);
+    new Glossary(qApp);
+
     QByteArray jsonString = jsonFile.readAll();
     QJsonDocument doc = QJsonDocument::fromJson(jsonString);
     QJsonObject json = doc.object();
     QVERIFY(!json.isEmpty());
-
-    QHash<QString, QMetaObject> factory {
-        { QSL("Glossary*"), Glossary::staticMetaObject },
-        { QSL("GlossDivObj*"), GlossDivObj::staticMetaObject },
-        { QSL("GlossListObj*"), GlossListObj::staticMetaObject },
-        { QSL("GlossEntryObj*"), GlossEntryObj::staticMetaObject },
-        { QSL("GlossDefObj*"), GlossDefObj::staticMetaObject }
-    };
 
     LDeserializer<GlossaryRoot> deserializer;
     QScopedPointer<GlossaryRoot> g(deserializer.deserialize(json));
