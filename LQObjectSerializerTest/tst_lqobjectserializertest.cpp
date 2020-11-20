@@ -122,7 +122,20 @@ private slots:
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
-{}
+{
+    LRegister::instance().registerType(SomeQObject::staticMetaObject);
+    LRegister::instance().registerType(SomeQObjectChild::staticMetaObject);
+    LRegister::instance().registerType(SomeQObjectChild2::staticMetaObject);
+    LRegister::instance().registerType(Glossary::staticMetaObject);
+    LRegister::instance().registerType(GlossDivObj::staticMetaObject);
+    LRegister::instance().registerType(GlossListObj::staticMetaObject);
+    LRegister::instance().registerType(GlossEntryObj::staticMetaObject);
+    LRegister::instance().registerType(GlossDefObj::staticMetaObject);
+    LRegister::instance().registerType(Item::staticMetaObject);
+    LRegister::instance().registerType(Menu::staticMetaObject);
+    LRegister::instance().registerType(FMoreInfo::staticMetaObject);
+    LRegister::instance().registerType(FPersonInfo::staticMetaObject);
+}
 
 LQObjectSerializerTest::~LQObjectSerializerTest()
 {}
@@ -157,13 +170,7 @@ void LQObjectSerializerTest::test_case1()
 
     qDebug().noquote() << QString(doc.toJson(QJsonDocument::Indented));
 
-    QHash<QString, QMetaObject> factory {
-        { QStringLiteral("SomeQObject*"), SomeQObject::staticMetaObject },
-        { QStringLiteral("SomeQObjectChild*"), SomeQObjectChild::staticMetaObject },
-        { QStringLiteral("SomeQObjectChild2*"), SomeQObjectChild2::staticMetaObject }
-    };
-
-    LDeserializer<SomeQObject> deserializer(factory);
+    LDeserializer<SomeQObject> deserializer;
     QScopedPointer<SomeQObject> res(deserializer.deserialize(json));
 
     QCOMPARE(res->someInt(), 7);
@@ -199,7 +206,7 @@ void LQObjectSerializerTest::test_case2()
         { QSL("GlossDefObj*"), GlossDefObj::staticMetaObject }
     };
 
-    LDeserializer<GlossaryRoot> deserializer(factory);
+    LDeserializer<GlossaryRoot> deserializer;
     QScopedPointer<GlossaryRoot> g(deserializer.deserialize(json));
     QVERIFY(g->glossary() != nullptr);
     QVERIFY(g->glossary()->GlossDiv() != nullptr);
@@ -227,12 +234,7 @@ void LQObjectSerializerTest::test_case3()
 
     QByteArray jsonString = jsonFile.readAll();
 
-    QHash<QString, QMetaObject> factory {
-        { QSL("Item*"), Item::staticMetaObject },
-        { QSL("Menu*"), Menu::staticMetaObject }
-    };
-
-    LDeserializer<MenuRoot> deserializer(factory);
+    LDeserializer<MenuRoot> deserializer;
     QScopedPointer<MenuRoot> g(deserializer.deserialize(jsonString));
     QVERIFY(g->menu() != nullptr);
     QCOMPARE(g->menu()->items().size(), 22);
@@ -257,12 +259,7 @@ void LQObjectSerializerTest::test_case4()
 
     QByteArray jsonString = jsonFile.readAll();
 
-    QHash<QString, QMetaObject> factory {
-        { QSL("FMoreInfo*"), FMoreInfo::staticMetaObject },
-        { QSL("FPersonInfo*"), FPersonInfo::staticMetaObject }
-    };
-
-    LDeserializer<FPersonInfo> deserializer(factory);
+    LDeserializer<FPersonInfo> deserializer;
     QScopedPointer<FPersonInfo> g(deserializer.deserialize(jsonString));
     QVERIFY(g);
     QCOMPARE(g->age(), 33);
