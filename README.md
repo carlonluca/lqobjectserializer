@@ -62,15 +62,8 @@ public:
 ```
 with a call to:
 ```
-LDeserializer<MenuRoot> deserializer(factory);
+LDeserializer<MenuRoot> deserializer;
 QScopedPointer<MenuRoot> g(deserializer.deserialize(jsonString));
-```
-where factory is a hashmap mapping object types to meta objects:
-```
-QHash<QString, QMetaObject> factory {
-    { QSL("Item*"), Item::staticMetaObject },
-    { QSL("Menu*"), Menu::staticMetaObject }
-};
 ```
 When you want to have an array of QObject subclasses, you'll need to provide a add function. The name of the add function must be "add_" + the name of the array.
 The L_RW_PROP is a macro defined in the lqtutils submodule. If the class is only intended as a container of data, you can synthesize even more using the L_BEGIN_CLASS and L_END_CLASS macros from lqtutils. The result would be:
@@ -107,6 +100,7 @@ L_BEGIN_CLASS(MenuRoot)
 L_RW_PROP(Menu*, menu, setMenu, nullptr)
 L_END_CLASS
 ```
+Note that you'll have to register the types with [qRegisterMetaType](https://doc.qt.io/qt-5/qmetatype.html#qRegisterMetaType-1).
 ## QObject serialization to JSON
 ```
 QScopedPointer mr(new MenuRoot);
