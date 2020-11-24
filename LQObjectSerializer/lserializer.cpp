@@ -63,31 +63,47 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
 {
     if (value.isNull())
         return QJsonValue::Undefined;
-    if (value.canConvert<QVariantList>())
+
+    QMetaType metaType(value.userType());
+    qDebug() << "Meta type:" << value.userType() << value.typeName();
+    // TODO: Check.
+    switch (metaType.id()) {
+    case QMetaType::QVariantList:
         return serializeArray(value.value<QSequentialIterable>());
-    if (value.canConvert<QObject*>()) {
+    case QMetaType::QString:
+        return QJsonValue(value.toString());
+    case QMetaType::Int:
+    case QMetaType::UInt:
+    case QMetaType::Long:
+    case QMetaType::LongLong:
+        return QJsonValue(value.toDouble());
+    case QMetaType::Bool:
+        return QJsonValue(value.toBool());
+    case QMetaType::Float:
+    case QMetaType::Double:
+        return QJsonValue(value.toDouble());
+    case QMetaType::QObjectStar:
         if (!value.value<QObject*>())
             return QJsonValue::Null;
         else
             return serializeObject(value.value<QObject*>());
-    }
-    else {
-        switch (static_cast<QMetaType::Type>(value.type())) {
-        case QMetaType::QString:
-            return QJsonValue(value.toString());
-        case QMetaType::Int:
-        case QMetaType::UInt:
-        case QMetaType::Long:
-        case QMetaType::LongLong:
-            return QJsonValue(value.toDouble());
-        case QMetaType::Bool:
-            return QJsonValue(value.toBool());
-        case QMetaType::Float:
-        case QMetaType::Double:
-            return QJsonValue(value.toDouble());
-        default:
-            break;
+    default:
+        if (metaType.flags().testFlag(QMetaType::PointerToQObject)) {
+            if (!value.value<QObject*>())
+                return QJsonValue::Null;
+            else
+                return serializeObject(value.value<QObject*>());
         }
+
+        // TODO: Add gadget impl here.
+
+        if (value.canConvert<QVariantList>())
+            return serializeArray(value.value<QSequentialIterable>());
+
+        const QMetaObject* metaObject = metaType.metaObject();
+        if (!metaObject)
+            break;
+        break;
     }
 
     return QJsonValue();
