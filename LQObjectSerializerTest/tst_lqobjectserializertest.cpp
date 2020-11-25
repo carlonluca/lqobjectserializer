@@ -107,6 +107,18 @@ L_RW_PROP(QList<int>, identifiers, setIdentifiers)
 L_RW_PROP(FMoreInfo*, more, setMore)
 L_END_CLASS
 
+L_BEGIN_GADGET(MonitorSize)
+L_RW_GPROP(int, w, setW)
+L_RW_GPROP(int, h, setH)
+L_END_GADGET
+
+L_BEGIN_GADGET(Monitor)
+L_RW_GPROP(QString, manufacturer, setManufacturer)
+L_RW_GPROP(QString, model, setModel)
+L_RW_GPROP(MonitorSize*, size, setSize)
+L_RW_GPROP(MonitorSize*, resolution, setResolution)
+L_END_GADGET
+
 class LQObjectSerializerTest : public QObject
 {
     Q_OBJECT
@@ -119,10 +131,12 @@ private slots:
     void test_case2();
     void test_case3();
     void test_case4();
+    void test_case5();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
 {
+    qRegisterMetaType<void*>();
     qRegisterMetaType<SomeQObject*>();
     qRegisterMetaType<SomeQObjectChild*>();
     qRegisterMetaType<SomeQObjectChild2*>();
@@ -135,6 +149,8 @@ LQObjectSerializerTest::LQObjectSerializerTest()
     qRegisterMetaType<Menu*>();
     qRegisterMetaType<FMoreInfo*>();
     qRegisterMetaType<FPersonInfo*>();
+    qRegisterMetaType<Monitor*>();
+    qRegisterMetaType<MonitorSize*>();
 }
 
 LQObjectSerializerTest::~LQObjectSerializerTest()
@@ -165,7 +181,7 @@ void LQObjectSerializerTest::test_case1()
                           << childObj3);
 
     LSerializer serializer;
-    QJsonObject json = serializer.serialize(&someObj);
+    QJsonObject json = serializer.serialize<SomeQObject>(&someObj);
     QJsonDocument doc(json);
 
     qDebug().noquote() << QString(doc.toJson(QJsonDocument::Indented));
@@ -240,7 +256,7 @@ void LQObjectSerializerTest::test_case3()
     QCOMPARE(g->menu()->items().at(2), nullptr);
 
     LSerializer serializer;
-    QJsonObject obj = serializer.serialize(g.data());
+    QJsonObject obj = serializer.serialize<MenuRoot>(g.data());
     QJsonDocument doc = QJsonDocument::fromJson(jsonString);
     QJsonObject json = doc.object();
     qDebug().noquote() << json;
@@ -264,6 +280,32 @@ void LQObjectSerializerTest::test_case4()
     QVERIFY(g->more());
     QVERIFY(g->more()->valid());
     QCOMPARE(g->more()->gps(), QSL("44.9064', W073° 59.0735'"));
+}
+
+void LQObjectSerializerTest::test_case5()
+{
+#if 0
+    QFile jsonFile(":/json_4.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    QByteArray jsonString = jsonFile.readAll();
+#endif
+
+    MonitorSize size;
+    size.setW(1117);
+    size.setH(644);
+
+    MonitorSize res;
+    res.setW(3840);
+    res.setH(2160);
+
+    Monitor monitor;
+    monitor.setManufacturer(QSL("Samsung"));
+    monitor.setModel(QSL("UE50TU7090U"));
+    monitor.setSize(&size);
+    monitor.setResolution(&res);
+
+    qDebug() << LSerializer().serialize<Monitor>(&monitor);
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)

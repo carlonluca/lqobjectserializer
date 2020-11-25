@@ -55,13 +55,19 @@ class LSerializer
 {
 public:
     LSerializer();
-    QJsonObject serialize(QObject* object);
+    template<class T> QJsonObject serialize(void* object);
 
 protected:
-    QJsonValue serializeObject(QObject* value);
+    QJsonValue serializeObject(void* value, const QMetaObject* metaObj);
     QJsonArray serializeArray(const QSequentialIterable &it);
     QJsonValue serializeValue(const QVariant& value);
 };
+
+template<class T>
+QJsonObject LSerializer::serialize(void* object)
+{
+    return !object ? QJsonObject() : serializeObject(object, &T::staticMetaObject).toObject();
+}
 
 template<class T>
 class LDeserializer
