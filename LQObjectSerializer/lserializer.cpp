@@ -31,21 +31,20 @@ Q_LOGGING_CATEGORY(lserializer, "lserializer")
 LSerializer::LSerializer()
 {}
 
-QJsonObject LSerializer::serialize(QObject* object)
-{
-    return !object ? QJsonObject() : serializeObject(object).toObject();
-}
-
-QJsonValue LSerializer::serializeObject(QObject* object)
+QJsonValue LSerializer::serializeObject(void* object, const QMetaObject* metaObj)
 {
     QJsonObject json;
+    bool isGadget = !metaObj->inherits(&QObject::staticMetaObject);
 
-    const QMetaObject* metaObj = object->metaObject();
     for (int i = metaObj->propertyOffset(); i < metaObj->propertyCount(); ++i) {
-        const char* propertyName = metaObj->property(i).name();
-        QVariant value = object->property(propertyName);
+        QMetaProperty metaProp = metaObj->property(i);
+        QVariant value;
+        if (isGadget)
+            value = metaProp.readOnGadget(object);
+        else
+            value = metaProp.read(reinterpret_cast<QObject*>(object));
         QJsonValue jsonValue = serializeValue(value);
-        json[propertyName] = jsonValue;
+        json[metaProp.name()] = jsonValue;
     }
 
     return json;
@@ -85,17 +84,27 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     case QMetaType::QObjectStar:
         if (!value.value<QObject*>())
             return QJsonValue::Null;
-        else
-            return serializeObject(value.value<QObject*>());
+        else {
+            QObject* obj = value.value<QObject*>();
+            return serializeObject(obj, obj->metaObject());
+        }
     default:
         if (metaType.flags().testFlag(QMetaType::PointerToQObject)) {
             if (!value.value<QObject*>())
                 return QJsonValue::Null;
-            else
-                return serializeObject(value.value<QObject*>());
+            else {
+                QObject* obj = value.value<QObject*>();
+                return serializeObject(obj, obj->metaObject());
+            }
         }
 
-        // TODO: Add gadget impl here.
+        if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
+            void* gadget = value.value<void*>();
+            if (!gadget)
+                return QJsonValue::Null;
+            else
+                return serializeObject(gadget, metaType.metaObject());
+        }
 
         if (value.canConvert<QVariantList>())
             return serializeArray(value.value<QSequentialIterable>());
