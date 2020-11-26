@@ -31,7 +31,7 @@ Q_LOGGING_CATEGORY(lserializer, "lserializer")
 LSerializer::LSerializer()
 {}
 
-QJsonValue LSerializer::serializeObject(void* object, const QMetaObject* metaObj)
+QJsonValue LSerializer::serializeObject(const void* object, const QMetaObject* metaObj)
 {
     QJsonObject json;
     bool isGadget = !metaObj->inherits(&QObject::staticMetaObject);
@@ -42,7 +42,7 @@ QJsonValue LSerializer::serializeObject(void* object, const QMetaObject* metaObj
         if (isGadget)
             value = metaProp.readOnGadget(object);
         else
-            value = metaProp.read(reinterpret_cast<QObject*>(object));
+            value = metaProp.read(reinterpret_cast<const QObject*>(object));
         QJsonValue jsonValue = serializeValue(value);
         json[metaProp.name()] = jsonValue;
     }
@@ -64,7 +64,6 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
         return QJsonValue::Undefined;
 
     QMetaType metaType(value.userType());
-    qDebug() << "Meta type:" << value.userType() << value.typeName();
     // TODO: Check.
     switch (metaType.id()) {
     case QMetaType::QVariantList:
@@ -99,7 +98,9 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
         }
 
         if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
-            void* gadget = value.value<void*>();
+            uintptr_t pgadget;
+            QMetaType::construct(value.userType(), &pgadget, value.constData());
+            const void* gadget = reinterpret_cast<void*>(pgadget);
             if (!gadget)
                 return QJsonValue::Null;
             else
