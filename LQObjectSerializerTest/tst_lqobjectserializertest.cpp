@@ -284,13 +284,6 @@ void LQObjectSerializerTest::test_case4()
 
 void LQObjectSerializerTest::test_case5()
 {
-#if 0
-    QFile jsonFile(":/json_4.json");
-    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
-
-    QByteArray jsonString = jsonFile.readAll();
-#endif
-
     MonitorSize size;
     size.setW(1117);
     size.setH(644);
@@ -318,6 +311,14 @@ void LQObjectSerializerTest::test_case5()
     QCOMPARE(json[QSL("resolution")].toObject()[QSL("h")], 2160);
     QCOMPARE(json[QSL("size")].toObject()[QSL("w")], 1117);
     QCOMPARE(json[QSL("size")].toObject()[QSL("h")], 644);
+
+    QFile jsonFile(":/json_4.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    QByteArray jsonString = jsonFile.readAll();
+
+    LDeserializer<Monitor> deserializer;
+    QScopedPointer<Monitor> m(deserializer.deserialize(jsonString));
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)
