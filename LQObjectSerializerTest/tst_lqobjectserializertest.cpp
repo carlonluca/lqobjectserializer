@@ -305,7 +305,19 @@ void LQObjectSerializerTest::test_case5()
     monitor.setSize(&size);
     monitor.setResolution(&res);
 
-    qDebug() << LSerializer().serialize<Monitor>(&monitor);
+    QJsonObject json = LSerializer().serialize<Monitor>(&monitor);
+    QVERIFY(json.contains(QSL("manufacturer")));
+    QVERIFY(json.contains(QSL("model")));
+    QVERIFY(json.contains(QSL("resolution")));
+    QVERIFY(json.contains(QSL("size")));
+    QVERIFY(json[QSL("resolution")].toObject().contains(QSL("w")));
+    QVERIFY(json[QSL("resolution")].toObject().contains(QSL("h")));
+    QVERIFY(json[QSL("size")].toObject().contains(QSL("w")));
+    QVERIFY(json[QSL("size")].toObject().contains(QSL("h")));
+    QCOMPARE(json[QSL("resolution")].toObject()[QSL("w")], 3840);
+    QCOMPARE(json[QSL("resolution")].toObject()[QSL("h")], 2160);
+    QCOMPARE(json[QSL("size")].toObject()[QSL("w")], 1117);
+    QCOMPARE(json[QSL("size")].toObject()[QSL("h")], 644);
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)

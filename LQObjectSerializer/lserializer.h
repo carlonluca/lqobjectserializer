@@ -58,7 +58,7 @@ public:
     template<class T> QJsonObject serialize(void* object);
 
 protected:
-    QJsonValue serializeObject(void* value, const QMetaObject* metaObj);
+    QJsonValue serializeObject(const void* value, const QMetaObject* metaObj);
     QJsonArray serializeArray(const QSequentialIterable &it);
     QJsonValue serializeValue(const QVariant& value);
 };
