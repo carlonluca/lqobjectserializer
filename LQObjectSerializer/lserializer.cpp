@@ -118,12 +118,3 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
 
     return QJsonValue();
 }
-
-template<class T>
-void LDeserializer<T>::writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget)
-{
-    if (isGadget)
-        metaProp.writeOnGadget(dest, value);
-    else
-        metaProp.write(reinterpret_cast<QObject*>(dest), value);
-}

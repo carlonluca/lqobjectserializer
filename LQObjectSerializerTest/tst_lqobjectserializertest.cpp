@@ -319,6 +319,12 @@ void LQObjectSerializerTest::test_case5()
 
     LDeserializer<Monitor> deserializer;
     QScopedPointer<Monitor> m(deserializer.deserialize(jsonString));
+
+    QVERIFY(m);
+    QCOMPARE(m->manufacturer(), QSL("Samsung"));
+    QCOMPARE(m->model(), QSL("Some real model"));
+    QVERIFY(m->size());
+    QCOMPARE(m->size()->w(), 1920);
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)
