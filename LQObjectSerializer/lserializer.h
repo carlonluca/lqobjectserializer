@@ -146,7 +146,7 @@ T* LDeserializer<T>::deserialize(const QString& jsonString)
 template<class T>
 void LDeserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMetaObject* metaObject)
 {
-    bool isGadget = metaObject->inherits(&QObject::staticMetaObject);
+    bool isGadget = !metaObject->inherits(&QObject::staticMetaObject);
     QJsonObject::const_iterator it = json.constBegin();
     while (it != json.constEnd()) {
         const QString key = it.key();
@@ -243,13 +243,10 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
             return;
         }
         else if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
-            //QMetaMethod ctor = metaObject->indexOfConstructor("");
-
-            uintptr_t pgadget;
-            metaType.construct(&pgadget);
-
-            void* gadget = reinterpret_cast<void*>(pgadget);
-            writeProp(metaProp, dest, QVariant::fromValue(gadget), isGadget);
+            // TODO: mem?
+            void* gadget = QMetaType::create(typeId);
+            QVariant vGadget(typeId, &gadget);
+            writeProp(metaProp, dest, vGadget, isGadget);
             deserializeJson(value.toObject(), gadget, metaObject);
         }
 
