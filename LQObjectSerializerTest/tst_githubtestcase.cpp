@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MIT License
  *
  * Copyright (c) 2020 Luca Carlon
@@ -8,7 +8,7 @@
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do 9so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
@@ -29,11 +29,12 @@
 #include "../deps/lqtutils/lqtutils_string.h"
 
 L_BEGIN_GADGET(LGHOwner)
-L_RW_GPROP(QString, login, setLogin)
-L_RW_GPROP(int, id, setId)
-L_RW_GPROP(QString, node_id, setNode_id)
-L_RW_GPROP(QString, avatar_url, setAvatar_url)
+L_RW_GPROP(QString, login, setLogin, "login")
+L_RW_GPROP(int, id, setId, 8)
+L_RW_GPROP(QString, node_id, setNode_id, "node_id")
+L_RW_GPROP(QString, avatar_url, setAvatar_url, "avatar")
 L_END_GADGET
+Q_DECLARE_METATYPE(LGHOwner*)
 
 L_BEGIN_GADGET(LGHRepo)
 L_RW_GPROP(int, id, setId)
@@ -42,6 +43,7 @@ L_RW_GPROP(QString, name, setName)
 L_RW_GPROP(QString, full_name, setFull_name)
 L_RW_GPROP(LGHOwner*, owner, setOwner)
 L_END_GADGET
+Q_DECLARE_METATYPE(LGHRepo*)
 
 class LGithubTestCase : public QObject
 {
@@ -55,6 +57,7 @@ private slots:
 
 LGithubTestCase::LGithubTestCase()
 {
+    qRegisterMetaType<void*>();
     qRegisterMetaType<LGHOwner*>();
     qRegisterMetaType<LGHRepo*>();
 }
@@ -72,6 +75,19 @@ void LGithubTestCase::test_case1()
     loop.exec();
 
     QVERIFY(!body.isEmpty());
+
+    QJsonArray jsonArray = QJsonDocument::fromJson(body.toUtf8()).array();
+    LDeserializer<LGHRepo> deserializer;
+    QList<LGHRepo*> repos = deserializer.deserializeObjectArray(jsonArray);
+    QVERIFY(repos.size() > 0);
+    QVERIFY(std::find_if(repos.begin(), repos.end(), [] (LGHRepo* repo) -> bool {
+        return repo->name() == QSL("lqobjectserializer");
+    }) != std::end(repos));
+#if 0
+    QVERIFY((*std::find_if(repos.begin(), repos.end(), [] (LGHRepo* repo) -> bool {
+        return repo->name() == QSL("lqobjectserializer");
+    }))->owner()->login() == QSL("carlonluca"));
+#endif
 }
 
 QTEST_MAIN(LGithubTestCase)
