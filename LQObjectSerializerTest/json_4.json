@@ -1,5 +1,8 @@
 {
     "manufacturer": "Samsung",
     "model": "Some real model",
-    "size": "1920x1080"
+    "size": {
+        "w": 1920,
+        "h": 1080
+    }
 }

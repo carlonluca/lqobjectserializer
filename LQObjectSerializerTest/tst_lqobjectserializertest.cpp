@@ -8,7 +8,7 @@
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do 9so, subject to the following conditions:
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
@@ -284,13 +284,6 @@ void LQObjectSerializerTest::test_case4()
 
 void LQObjectSerializerTest::test_case5()
 {
-#if 0
-    QFile jsonFile(":/json_4.json");
-    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
-
-    QByteArray jsonString = jsonFile.readAll();
-#endif
-
     MonitorSize size;
     size.setW(1117);
     size.setH(644);
@@ -318,6 +311,20 @@ void LQObjectSerializerTest::test_case5()
     QCOMPARE(json[QSL("resolution")].toObject()[QSL("h")], 2160);
     QCOMPARE(json[QSL("size")].toObject()[QSL("w")], 1117);
     QCOMPARE(json[QSL("size")].toObject()[QSL("h")], 644);
+
+    QFile jsonFile(":/json_4.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    QByteArray jsonString = jsonFile.readAll();
+
+    LDeserializer<Monitor> deserializer;
+    QScopedPointer<Monitor> m(deserializer.deserialize(jsonString));
+
+    QVERIFY(m);
+    QCOMPARE(m->manufacturer(), QSL("Samsung"));
+    QCOMPARE(m->model(), QSL("Some real model"));
+    QVERIFY(m->size());
+    QCOMPARE(m->size()->w(), 1920);
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)

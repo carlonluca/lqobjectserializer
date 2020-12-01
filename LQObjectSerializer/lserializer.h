@@ -36,6 +36,7 @@
 #include <QRegularExpression>
 #include <QLoggingCategory>
 #include <QMutex>
+#include <QMetaMethod>
 #ifdef QT_DEBUG
 #include <QDebug>
 #endif
@@ -74,26 +75,33 @@ class LDeserializer
 {
 public:
     LDeserializer();
-    T* deserialize(const QJsonObject& json, QObject* parent = nullptr);
-    T* deserialize(const QString& jsonString, QObject* parent = nullptr);
+    T* deserialize(const QJsonObject& json);
+    T* deserialize(const QString& jsonString);
+    QList<QString> deserializeStringArray(const QJsonArray& array);
+    QList<double>  deserializeNumberArray(const QJsonArray& array);
+    QList<bool>    deserializeBoolArray(const QJsonArray& array);
+    QList<T*>      deserializeObjectArray(const QJsonArray &array);
 
     static void lserializerRegisterObject(const QMetaObject& metaObject);
 
 protected:
-    void deserializeJson(QJsonObject json, QObject* object);
+    void deserializeJson(QJsonObject json,
+                         void* dest,
+                         const QMetaObject* metaObject);
     void deserializeValue(const QJsonValue& value,
                           const QMetaProperty& metaProp,
-                          QObject* dest);
+                          void* dest,
+                          bool isGadget);
     void deserializeArray(const QJsonArray& array,
                           const QMetaProperty& metaProp,
-                          QObject* dest);
+                          void* dest);
     void deserializeObjectArray(const QJsonArray& array,
                                 const QString& propName,
                                 const QString& type,
                                 QObject* dest);
 
-private:
-    bool registerContains(const char* name);
+protected:
+    void writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget);
 
 private:
     QRegularExpression m_arrayTypeRegex;
@@ -125,37 +133,75 @@ LDeserializer<T>::LDeserializer() :
 {}
 
 template<class T>
-T* LDeserializer<T>::deserialize(const QJsonObject& json, QObject* parent)
+T* LDeserializer<T>::deserialize(const QJsonObject& json)
 {
-    T* t = new T(parent);
-    deserializeJson(json, t);
+    T* t = new T;
+    deserializeJson(json, t, &T::staticMetaObject);
     return t;
 }
 
 template<class T>
-T* LDeserializer<T>::deserialize(const QString& jsonString, QObject *parent)
+T* LDeserializer<T>::deserialize(const QString& jsonString)
 {
     QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8());
     QJsonObject json = doc.object();
-    return deserialize(json, parent);
+    return deserialize(json);
 }
 
 template<class T>
-void LDeserializer<T>::deserializeJson(QJsonObject json, QObject* object)
+QList<QString> LDeserializer<T>::deserializeStringArray(const QJsonArray& array)
 {
+    return deserialize_array<QString>(array, [] (const QJsonValue& jsonValue) -> QString {
+        return jsonValue.toString();
+    }).toStringList();
+}
+
+template<class T>
+QList<double> LDeserializer<T>::deserializeNumberArray(const QJsonArray& array)
+{
+    QVariant v = deserialize_array<double>(array, [] (const QJsonValue& jsonValue) -> double {
+        return jsonValue.toDouble();
+    });
+    return v.value<QList<double>>();
+}
+
+template<class T>
+QList<bool> LDeserializer<T>::deserializeBoolArray(const QJsonArray &array)
+{
+    QVariant v = deserialize_array<bool>(array, [] (const QJsonValue& jsonValue) -> bool {
+        return jsonValue.toBool();
+    });
+    return v.value<QList<bool>>();
+}
+
+template<class T>
+QList<T*> LDeserializer<T>::deserializeObjectArray(const QJsonArray& array)
+{
+    QVariant v = deserialize_array<T*>(array, [this] (const QJsonValue& jsonValue) -> T* {
+        // TODO: Mem management.
+        T* t = new T();
+        deserializeJson(jsonValue.toObject(), t, &T::staticMetaObject);
+        return t;
+    });
+    return v.value<QList<T*>>();
+}
+
+template<class T>
+void LDeserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMetaObject* metaObject)
+{
+    bool isGadget = !metaObject->inherits(&QObject::staticMetaObject);
     QJsonObject::const_iterator it = json.constBegin();
-    const QMetaObject* metaObj = object->metaObject();
     while (it != json.constEnd()) {
         const QString key = it.key();
-        for (int i = 0; i < metaObj->propertyCount(); i++)
-            if (metaObj->property(i).name() == key)
-                deserializeValue(it.value(), metaObj->property(i), object);
+        for (int i = 0; i < metaObject->propertyCount(); i++)
+            if (metaObject->property(i).name() == key)
+                deserializeValue(it.value(), metaObject->property(i), dest, isGadget);
         ++it;
     }
 }
 
 template<class T>
-void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, QObject* dest)
+void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, void* dest)
 {
     qDebug() << "Deserialize array:" << metaProp.typeName() << metaProp.name();
     QRegularExpressionMatch match = m_arrayTypeRegex.match(metaProp.typeName());
@@ -167,52 +213,66 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
     QString container = match.captured(1);
     QString type = match.captured(2);
     if (type == QStringLiteral("int"))
-        dest->setProperty(metaProp.name(), deserialize_array<int>(array, [] (const QJsonValue& jsonValue) -> int {
+        writeProp(metaProp, dest, deserialize_array<int>(array, [] (const QJsonValue& jsonValue) -> int {
             return jsonValue.toInt();
-        }));
+        }), false);
     else if (type == QStringLiteral("long"))
-        dest->setProperty(metaProp.name(), deserialize_array<long>(array, [] (const QJsonValue& jsonValue) -> long {
+        writeProp(metaProp, dest, deserialize_array<long>(array, [] (const QJsonValue& jsonValue) -> long {
             return jsonValue.toInt();
-        }));
+        }), false);
     else if (type == QStringLiteral("float"))
-        qDebug() << "List of floats";
+        writeProp(metaProp, dest, deserialize_array<float>(array, [] (const QJsonValue& jsonValue) -> float {
+            return jsonValue.toDouble();
+        }), false);
     else if (type == QStringLiteral("double"))
-        qDebug() << "List of doubles";
+        writeProp(metaProp, dest, deserialize_array<double>(array, [] (const QJsonValue& jsonValue) -> double {
+            return jsonValue.toDouble();
+        }), false);
     else if (type == QStringLiteral("QString"))
-        dest->setProperty(metaProp.name(), deserialize_array<QString>(array, [] (const QJsonValue& jsonValue) -> QString {
+        writeProp(metaProp, dest, deserialize_array<QString>(array, [] (const QJsonValue& jsonValue) -> QString {
             return jsonValue.toString();
-        }));
+        }), false);
     else if (type == QStringLiteral("bool"))
-        dest->setProperty(metaProp.name(), deserialize_array<bool>(array, [] (const QJsonValue& jsonValue) -> bool {
+        writeProp(metaProp, dest, deserialize_array<bool>(array, [] (const QJsonValue& jsonValue) -> bool {
             return jsonValue.toBool();
-        }));
+        }), false);
     else {
+        // TODO: Implement gadget.
         if (QMetaType::type(type.toLatin1().data()) != QMetaType::UnknownType)
-            deserializeObjectArray(array, metaProp.name(), type, dest);
+            deserializeObjectArray(array, metaProp.name(), type, reinterpret_cast<QObject*>(dest));
         else
             qWarning() << type << "is not known";
     }
 
     return;
 }
-
+class LGHOwner2
+{
+    Q_GADGET
+public:
+    Q_INVOKABLE LGHOwner2() { qDebug() << Q_FUNC_INFO; }
+private:
+L_RW_GPROP(QString, login, setLogin, "login")
+L_RW_GPROP(int, id, setId, 8)
+L_RW_GPROP(QString, node_id, setNode_id, "node_id")
+L_RW_GPROP(QString, avatar_url, setAvatar_url, "avatar")
+L_END_GADGET
 template<class T>
-void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, QObject* dest)
+void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, void* dest, bool isGadget)
 {
     switch (value.type()) {
     case QJsonValue::Null:
     case QJsonValue::Undefined:
-        dest->setProperty(metaProp.name(), QVariant());
+        writeProp(metaProp, dest, QVariant(), isGadget);
         break;
     case QJsonValue::Bool:
-        dest->setProperty(metaProp.name(), value.toBool());
+        writeProp(metaProp, dest, value.toBool(), isGadget);
         break;
     case QJsonValue::Double:
-        qDebug() << "Settings:" << metaProp.name() << value.toInt();
-        dest->setProperty(metaProp.name(), value.toDouble());
+        writeProp(metaProp, dest, value.toDouble(), isGadget);
         break;
     case QJsonValue::String:
-        dest->setProperty(metaProp.name(), value.toString());
+        writeProp(metaProp, dest, value.toString(), isGadget);
         break;
     case QJsonValue::Array:
         deserializeArray(value.toArray(), metaProp, dest);
@@ -226,10 +286,28 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
             break;
         }
 
+        QMetaType metaType(typeId);
         const QMetaObject* metaObject = QMetaType::metaObjectForType(typeId);
-        QObject* child = metaObject->newInstance(Q_ARG(QObject*, dest));
-        dest->setProperty(metaProp.name(), QVariant::fromValue<QObject*>(child));
-        deserializeJson(value.toObject(), child);
+        if (metaType.flags().testFlag(QMetaType::PointerToQObject)) {
+            QObject* parent = reinterpret_cast<QObject*>(dest);
+            QObject* child = metaObject->newInstance(Q_ARG(QObject*, parent));
+            parent->setProperty(metaProp.name(), QVariant::fromValue<QObject*>(child));
+            deserializeJson(value.toObject(), child, metaObject);
+            return;
+        }
+        else if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
+            // TODO: mem?
+            void* gadget = QMetaType::create(QMetaType::type(metaObject->className()));
+            for (int i = 0; i < metaObject->constructorCount(); i++)
+                qDebug() << "Ctor:" << metaObject->constructor(i).name();
+            LGHOwner2* owner = reinterpret_cast<LGHOwner2*>(gadget);
+            QMetaMethod ctor = metaObject->constructor(0);
+            if (!ctor.invokeOnGadget(owner))
+                qWarning() << "Cannot call ctor";
+            QVariant vGadget(typeId, &gadget);
+            writeProp(metaProp, dest, vGadget, isGadget);
+            deserializeJson(value.toObject(), gadget, metaObject);
+        }
 
         // TODO: Handle errors.
 
@@ -262,12 +340,21 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
             }
 
             QObject* child = QMetaType::metaObjectForType(itype)->newInstance(Q_ARG(QObject*, dest));
-            deserializeJson((*it).toObject(), child);
+            deserializeJson((*it).toObject(), child, child->metaObject());
             addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, child));
         }
 
         ++it;
     }
+}
+
+template<class T>
+void LDeserializer<T>::writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget)
+{
+    if (isGadget)
+        metaProp.writeOnGadget(dest, value);
+    else
+        metaProp.write(reinterpret_cast<QObject*>(dest), value);
 }
 
 #endif // LCSERIALIZER_H

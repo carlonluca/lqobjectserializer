@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(LQObjectSerializerTest LANGUAGES CXX)
 
-
 find_package(Qt5Test REQUIRED)
+find_package(Qt5Network REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -25,4 +25,12 @@ add_executable(LQObjectSerializerTest
     )
 add_test(NAME LQObjectSerializerTest COMMAND LQObjectSerializerTest)
 
-target_link_libraries(LQObjectSerializerTest PRIVATE Qt5::Test)
+add_executable(LGithubTestCase
+    tst_githubtestcase.cpp
+    res.qrc
+    ../LQObjectSerializer/lserializer.cpp
+    )
+add_test(NAME LGithubTestCase COMMAND LGithubTestCase)
+
+target_link_libraries(LQObjectSerializerTest PRIVATE Qt5::Test Qt5::Network)
+target_link_libraries(LGithubTestCase PRIVATE Qt5::Test Qt5::Network)
