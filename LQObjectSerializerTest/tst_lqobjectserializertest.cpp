@@ -136,7 +136,6 @@ private slots:
 
 LQObjectSerializerTest::LQObjectSerializerTest()
 {
-    qRegisterMetaType<void*>();
     qRegisterMetaType<SomeQObject*>();
     qRegisterMetaType<SomeQObjectChild*>();
     qRegisterMetaType<SomeQObjectChild2*>();
@@ -151,6 +150,8 @@ LQObjectSerializerTest::LQObjectSerializerTest()
     qRegisterMetaType<FPersonInfo*>();
     qRegisterMetaType<Monitor*>();
     qRegisterMetaType<MonitorSize*>();
+    qRegisterMetaType<Monitor>();
+    qRegisterMetaType<MonitorSize>();
 }
 
 LQObjectSerializerTest::~LQObjectSerializerTest()

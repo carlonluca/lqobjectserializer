@@ -246,17 +246,7 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
 
     return;
 }
-class LGHOwner2
-{
-    Q_GADGET
-public:
-    Q_INVOKABLE LGHOwner2() { qDebug() << Q_FUNC_INFO; }
-private:
-L_RW_GPROP(QString, login, setLogin, "login")
-L_RW_GPROP(int, id, setId, 8)
-L_RW_GPROP(QString, node_id, setNode_id, "node_id")
-L_RW_GPROP(QString, avatar_url, setAvatar_url, "avatar")
-L_END_GADGET
+
 template<class T>
 void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, void* dest, bool isGadget)
 {
@@ -280,30 +270,24 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
     case QJsonValue::Object:
         const char* className = metaProp.typeName();
         int typeId = QMetaType::type(metaProp.typeName());
+        const QMetaObject* metaObject = QMetaType::metaObjectForType(typeId);
         if (typeId == QMetaType::UnknownType) {
             qCDebug(lserializer) << "Class not registered:"
-                                 << className;
+                                 << className << metaObject->className();
             break;
         }
 
         QMetaType metaType(typeId);
-        const QMetaObject* metaObject = QMetaType::metaObjectForType(typeId);
         if (metaType.flags().testFlag(QMetaType::PointerToQObject)) {
             QObject* parent = reinterpret_cast<QObject*>(dest);
             QObject* child = metaObject->newInstance(Q_ARG(QObject*, parent));
-            parent->setProperty(metaProp.name(), QVariant::fromValue<QObject*>(child));
+            writeProp(metaProp, dest, QVariant::fromValue<QObject*>(child), isGadget);
             deserializeJson(value.toObject(), child, metaObject);
             return;
         }
         else if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
             // TODO: mem?
             void* gadget = QMetaType::create(QMetaType::type(metaObject->className()));
-            for (int i = 0; i < metaObject->constructorCount(); i++)
-                qDebug() << "Ctor:" << metaObject->constructor(i).name();
-            LGHOwner2* owner = reinterpret_cast<LGHOwner2*>(gadget);
-            QMetaMethod ctor = metaObject->constructor(0);
-            if (!ctor.invokeOnGadget(owner))
-                qWarning() << "Cannot call ctor";
             QVariant vGadget(typeId, &gadget);
             writeProp(metaProp, dest, vGadget, isGadget);
             deserializeJson(value.toObject(), gadget, metaObject);
