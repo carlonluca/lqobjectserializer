@@ -60,6 +60,8 @@ LGithubTestCase::LGithubTestCase()
     qRegisterMetaType<void*>();
     qRegisterMetaType<LGHOwner*>();
     qRegisterMetaType<LGHRepo*>();
+    qRegisterMetaType<LGHOwner>();
+    qRegisterMetaType<LGHRepo>();
 }
 
 void LGithubTestCase::test_case1()
@@ -83,7 +85,7 @@ void LGithubTestCase::test_case1()
     QVERIFY(std::find_if(repos.begin(), repos.end(), [] (LGHRepo* repo) -> bool {
         return repo->name() == QSL("lqobjectserializer");
     }) != std::end(repos));
-#if 0
+#if 1
     QVERIFY((*std::find_if(repos.begin(), repos.end(), [] (LGHRepo* repo) -> bool {
         return repo->name() == QSL("lqobjectserializer");
     }))->owner()->login() == QSL("carlonluca"));

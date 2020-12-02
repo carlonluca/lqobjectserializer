@@ -48,7 +48,7 @@ Q_DECLARE_LOGGING_CATEGORY(lserializer)
 #define L_RW_PROP_ARRAY_WITH_ADDER(type, name, setter)                                 \
     L_RW_PROP3(QList<type>, name, setter)                                              \
     public:                                                                            \
-    Q_INVOKABLE void add_##name(QObject* o) { m_##name.append(static_cast<type>(o)); }
+    Q_INVOKABLE void add_##name(void* o) { m_##name.append(reinterpret_cast<type>(o)); }
 
 class QObject;
 
@@ -99,6 +99,10 @@ protected:
                                 const QString& propName,
                                 const QString& type,
                                 QObject* dest);
+    void* instantiateObject(const QJsonValue& value,
+                            const QMetaType& metaType,
+                            bool isGadget,
+                            QObject* parent);
 
 protected:
     void writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget);
@@ -248,6 +252,34 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
 }
 
 template<class T>
+void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaType& metaType, bool isGadget, QObject* parent)
+{
+    const QMetaObject* metaObject = QMetaType::metaObjectForType(metaType.id());
+    if (metaType.id() == QMetaType::UnknownType) {
+        qCDebug(lserializer) << "Class not registered:"
+                             << metaType.name() << metaObject->className();
+        return nullptr;
+    }
+
+    if (!isGadget) {
+        QObject* child = metaObject->newInstance();
+        // TODO: Check errors.
+        if (parent)
+            child->setParent(parent);
+        deserializeJson(value.toObject(), child, metaObject);
+        return child;
+    }
+    else {
+        // TODO: mem?
+        void* gadget = QMetaType::create(QMetaType::type(metaObject->className()));
+        deserializeJson(value.toObject(), gadget, metaObject);
+        return gadget;
+    }
+
+    return nullptr;
+}
+
+template<class T>
 void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, void* dest, bool isGadget)
 {
     switch (value.type()) {
@@ -268,30 +300,18 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         deserializeArray(value.toArray(), metaProp, dest);
         break;
     case QJsonValue::Object:
-        const char* className = metaProp.typeName();
         int typeId = QMetaType::type(metaProp.typeName());
-        const QMetaObject* metaObject = QMetaType::metaObjectForType(typeId);
-        if (typeId == QMetaType::UnknownType) {
-            qCDebug(lserializer) << "Class not registered:"
-                                 << className << metaObject->className();
-            break;
-        }
-
         QMetaType metaType(typeId);
-        if (metaType.flags().testFlag(QMetaType::PointerToQObject)) {
-            QObject* parent = reinterpret_cast<QObject*>(dest);
-            QObject* child = metaObject->newInstance(Q_ARG(QObject*, parent));
-            writeProp(metaProp, dest, QVariant::fromValue<QObject*>(child), isGadget);
-            deserializeJson(value.toObject(), child, metaObject);
-            return;
-        }
-        else if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
-            // TODO: mem?
-            void* gadget = QMetaType::create(QMetaType::type(metaObject->className()));
-            QVariant vGadget(typeId, &gadget);
-            writeProp(metaProp, dest, vGadget, isGadget);
-            deserializeJson(value.toObject(), gadget, metaObject);
-        }
+        bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
+        // TODO: Check error.
+        QObject* parent = !createGadget && isGadget ? reinterpret_cast<QObject*>(dest) : nullptr;
+        void* obj = instantiateObject(value, metaType, createGadget, parent);
+        QVariant value_;
+        if (createGadget)
+            value_ = QVariant(typeId, &obj);
+        else
+            value_ = QVariant::fromValue<QObject*>(reinterpret_cast<QObject*>(obj));
+        writeProp(metaProp, dest, value_, isGadget);
 
         // TODO: Handle errors.
 
@@ -314,18 +334,18 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
     QJsonArray::const_iterator it = array.constBegin();
     while (it != array.constEnd()) {
         if ((*it).type() == QJsonValue::Null || (*it).type() == QJsonValue::Undefined)
-            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, nullptr));
+            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(void*, nullptr));
         else {
-            int itype = QMetaType::type(type.toLatin1());
-            if (itype == QMetaType::UnknownType) {
-                qCDebug(lserializer) << "Class not registered:"
-                                     << propName;
-                break;
-            }
+            int typeId = QMetaType::type(type.toLatin1());
+            QMetaType metaType(typeId);
+            bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
+            QObject* parent = !createGadget ? reinterpret_cast<QObject*>(dest) : nullptr;
+            // TODO: Check error.
+            void* obj = instantiateObject((*it).toObject(), metaType, createGadget, parent);
+            // TODO: Set parent.
+            //QVariant value_ = QVariant::fromValue(obj);
 
-            QObject* child = QMetaType::metaObjectForType(itype)->newInstance(Q_ARG(QObject*, dest));
-            deserializeJson((*it).toObject(), child, child->metaObject());
-            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(QObject*, child));
+            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(void*, obj));
         }
 
         ++it;
