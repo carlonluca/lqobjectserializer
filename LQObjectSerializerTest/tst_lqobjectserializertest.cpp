@@ -60,7 +60,7 @@ L_RW_PROP(QString, GlossTerm, setGlossTerm)
 L_RW_PROP(QString, Acronym, setAcronym)
 L_RW_PROP(QString, Abbrev, setAbbrev)
 L_RW_PROP(QString, GlossSee, setGlossSee)
-L_RW_PROP(GlossDefObj*, GlossDef, setGlossDef)
+L_RW_PROP(GlossDefObj*, GlossDef, setGlossDef, nullptr)
 L_END_CLASS
 
 L_BEGIN_CLASS(GlossListObj)
@@ -97,12 +97,12 @@ L_END_CLASS
 
 L_BEGIN_CLASS(FMoreInfo)
 L_RW_PROP(QString, gps, setGps)
-L_RW_PROP(bool, valid, setValid)
+L_RW_PROP(bool, valid, setValid, false)
 L_END_CLASS
 
 L_BEGIN_CLASS(FPersonInfo)
 L_RW_PROP(QString, name, setName)
-L_RW_PROP(int, age, setAge)
+L_RW_PROP(int, age, setAge, 0)
 L_RW_PROP(QList<int>, identifiers, setIdentifiers)
 L_RW_PROP(FMoreInfo*, more, setMore, nullptr)
 L_END_CLASS
@@ -210,8 +210,9 @@ void LQObjectSerializerTest::test_case2()
     QFile jsonFile(":/json_1.json");
     QVERIFY(jsonFile.open(QIODevice::ReadOnly));
 
-    new GlossaryRoot(qApp);
-    new Glossary(qApp);
+    QObject bag;
+    new GlossaryRoot(&bag);
+    new Glossary(&bag);
 
     QByteArray jsonString = jsonFile.readAll();
     QJsonDocument doc = QJsonDocument::fromJson(jsonString);
@@ -326,6 +327,9 @@ void LQObjectSerializerTest::test_case5()
     QCOMPARE(m->model(), QSL("Some real model"));
     QVERIFY(m->size());
     QCOMPARE(m->size()->w(), 1920);
+
+    delete m->size();
+    delete m->resolution();
 }
 
 QTEST_APPLESS_MAIN(LQObjectSerializerTest)

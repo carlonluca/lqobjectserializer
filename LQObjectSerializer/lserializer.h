@@ -1,4 +1,4 @@
-/**
+/**2
  * MIT License
  *
  * Copyright (c) 2020 Luca Carlon
@@ -304,7 +304,7 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         QMetaType metaType(typeId);
         bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
         // TODO: Check error.
-        QObject* parent = !createGadget && isGadget ? reinterpret_cast<QObject*>(dest) : nullptr;
+        QObject* parent = !createGadget && !isGadget ? reinterpret_cast<QObject*>(dest) : nullptr;
         void* obj = instantiateObject(value, metaType, createGadget, parent);
         QVariant value_;
         if (createGadget)
