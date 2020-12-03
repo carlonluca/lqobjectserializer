@@ -90,6 +90,12 @@ void LGithubTestCase::test_case1()
         return repo->name() == QSL("lqobjectserializer");
     }))->owner()->login() == QSL("carlonluca"));
 #endif
+
+    // Free.
+    foreach (LGHRepo* repo, repos) {
+        delete repo->owner();
+        delete repo;
+    }
 }
 
 QTEST_MAIN(LGithubTestCase)
