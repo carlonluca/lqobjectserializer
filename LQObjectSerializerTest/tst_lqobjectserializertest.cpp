@@ -104,7 +104,7 @@ L_BEGIN_CLASS(FPersonInfo)
 L_RW_PROP(QString, name, setName)
 L_RW_PROP(int, age, setAge)
 L_RW_PROP(QList<int>, identifiers, setIdentifiers)
-L_RW_PROP(FMoreInfo*, more, setMore)
+L_RW_PROP(FMoreInfo*, more, setMore, nullptr)
 L_END_CLASS
 
 L_BEGIN_GADGET(MonitorSize)
@@ -115,8 +115,8 @@ L_END_GADGET
 L_BEGIN_GADGET(Monitor)
 L_RW_GPROP(QString, manufacturer, setManufacturer)
 L_RW_GPROP(QString, model, setModel)
-L_RW_GPROP(MonitorSize*, size, setSize)
-L_RW_GPROP(MonitorSize*, resolution, setResolution)
+L_RW_GPROP(MonitorSize*, size, setSize, nullptr)
+L_RW_GPROP(MonitorSize*, resolution, setResolution, nullptr)
 L_END_GADGET
 
 class LQObjectSerializerTest : public QObject
