@@ -101,6 +101,24 @@ L_RW_PROP(Menu*, menu, setMenu, nullptr)
 L_END_CLASS
 ```
 Note that you'll have to register the types with [qRegisterMetaType](https://doc.qt.io/qt-5/qmetatype.html#qRegisterMetaType-1).
+
+## JSON deserialization to Q_GADGET
+It is possible to serialize/deserialize to a Q_GADGET class. This is an example:
+
+```
+L_BEGIN_GADGET(ImageData)
+L_RW_GPROP(QString, jpg, setJpg)
+L_RW_GPROP(int, contrast, setContrast)
+L_RW_GPROP(int, brightness, setBrightness)
+L_END_GADGET
+Q_DECLARE_METATYPE(QSharedPointer<ImageData>)
+
+[...]
+
+LDeserializer<ImageData> des;
+QSharedPointer<ImageData> data(des.deserialize(path));
+```
+**NOTE**: At the moment, nested Q_GADGET objects must be freed manually.
 ## QObject serialization to JSON
 ```
 QScopedPointer mr(new MenuRoot);
