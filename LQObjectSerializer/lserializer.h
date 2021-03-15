@@ -198,8 +198,10 @@ void LDeserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMeta
     while (it != json.constEnd()) {
         const QString key = it.key();
         for (int i = 0; i < metaObject->propertyCount(); i++)
-            if (metaObject->property(i).name() == key)
+            if (metaObject->property(i).name() == key) {
                 deserializeValue(it.value(), metaObject->property(i), dest, isGadget);
+                break;
+            }
         ++it;
     }
 }
