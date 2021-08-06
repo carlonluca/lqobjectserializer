@@ -119,6 +119,25 @@ L_RW_GPROP(MonitorSize*, size, setSize, nullptr)
 L_RW_GPROP(MonitorSize*, resolution, setResolution, nullptr)
 L_END_GADGET
 
+L_BEGIN_GADGET(KodiResponseItem)
+L_RW_GPROP(QString, fanart, setFanart)
+L_RW_GPROP(QString, label, setLabel)
+L_RW_GPROP(int, id, setId)
+L_RW_GPROP(QString, thumbnail, setThumbnail)
+L_RW_GPROP(QString, title, setTitle)
+L_RW_GPROP(QString, type, setType)
+L_END_GADGET
+
+L_BEGIN_GADGET(KodiResponseResult)
+L_RW_GPROP(KodiResponseItem*, item, setItem, nullptr)
+L_END_GADGET
+
+L_BEGIN_GADGET(KodiResponse)
+L_RW_GPROP(int, id, setId)
+L_RW_GPROP(QString, jsonrpc, setJsonrpc)
+L_RW_GPROP(KodiResponseResult*, result, setResult, nullptr)
+L_END_GADGET
+
 class LQObjectSerializerTest : public QObject
 {
     Q_OBJECT
@@ -132,6 +151,7 @@ private slots:
     void test_case3();
     void test_case4();
     void test_case5();
+    void test_case6();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -152,6 +172,12 @@ LQObjectSerializerTest::LQObjectSerializerTest()
     qRegisterMetaType<MonitorSize*>();
     qRegisterMetaType<Monitor>();
     qRegisterMetaType<MonitorSize>();
+    qRegisterMetaType<KodiResponseItem*>();
+    qRegisterMetaType<KodiResponseResult*>();
+    qRegisterMetaType<KodiResponse*>();
+    qRegisterMetaType<KodiResponseItem>();
+    qRegisterMetaType<KodiResponseResult>();
+    qRegisterMetaType<KodiResponse>();
 }
 
 LQObjectSerializerTest::~LQObjectSerializerTest()
@@ -332,6 +358,28 @@ void LQObjectSerializerTest::test_case5()
     delete m->resolution();
 }
 
-QTEST_APPLESS_MAIN(LQObjectSerializerTest)
+void LQObjectSerializerTest::test_case6()
+{
+    KodiResponseResult r1;
+    KodiResponseItem r2;
+    KodiResponse r3;
+
+    QFile jsonFile(":/json_5.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    QByteArray jsonString = jsonFile.readAll();
+
+    LDeserializer<KodiResponse> deserializer;
+    QScopedPointer<KodiResponse> m(deserializer.deserialize(jsonString));
+
+    QVERIFY(m);
+    QCOMPARE(m->id(), 12345);
+    QCOMPARE(m->result()->item()->type(), QSL("channel"));
+
+    delete m->result()->item();
+    delete m->result();
+}
+
+QTEST_GUILESS_MAIN(LQObjectSerializerTest)
 
 #include "tst_lqobjectserializertest.moc"

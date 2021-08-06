@@ -1,0 +1,14 @@
+{
+   "id":12345,
+   "jsonrpc":"2.0",
+   "result":{
+      "item":{
+         "fanart":"",
+         "id":999,
+         "label":"xyz",
+         "thumbnail":"image:",
+         "title":"xyz",
+         "type":"channel"
+      }
+   }
+}

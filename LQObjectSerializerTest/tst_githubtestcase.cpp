@@ -98,6 +98,6 @@ void LGithubTestCase::test_case1()
     }
 }
 
-QTEST_MAIN(LGithubTestCase)
+QTEST_GUILESS_MAIN(LGithubTestCase)
 
 #include "tst_githubtestcase.moc"
