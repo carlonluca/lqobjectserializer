@@ -2,6 +2,9 @@ image:
   name: "carlonluca/qt-dev:5.15.2"
   entrypoint: [""]
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 stages:
   - test
 
