@@ -73,7 +73,7 @@ void LGithubTestCase::test_case1()
         body.append(reply->readAll());
         loop.quit();
     });
-    manager.get(QNetworkRequest(QUrl(QSL("https://api.github.com/users/carlonluca/repos"))));
+    manager.get(QNetworkRequest(QUrl(QSL("https://api.github.com/users/carlonluca/repos?per_page=100"))));
     loop.exec();
 
     QVERIFY(!body.isEmpty());
