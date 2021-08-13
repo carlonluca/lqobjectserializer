@@ -219,8 +219,10 @@ void LQObjectSerializerTest::test_caseNull()
         QMetaProperty mp = mo.property(j);
         if (mp.name() == QString("id"))
             QVERIFY(!mp.read(i.data()).isNull());
-        else if (mp.name() == QString("label"))
+        else if (mp.name() == QString("label")) {
             QVERIFY(mp.read(i.data()).isNull());
+            QVERIFY(mp.read(i.data()).toString().isNull());
+        }
     }
 }
 
