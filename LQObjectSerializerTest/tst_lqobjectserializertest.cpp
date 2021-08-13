@@ -146,6 +146,7 @@ public:
     ~LQObjectSerializerTest();
 
 private slots:
+    void test_caseNull();
     void test_case1();
     void test_case2();
     void test_case3();
@@ -182,6 +183,46 @@ LQObjectSerializerTest::LQObjectSerializerTest()
 
 LQObjectSerializerTest::~LQObjectSerializerTest()
 {}
+
+class MyObject : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString id READ id WRITE setId NOTIFY idChanged)
+    Q_PROPERTY(QString label READ label WRITE setLabel NOTIFY labelChanged)
+    QString m_id;
+    QString m_label;
+
+public:
+    MyObject(QObject* parent = nullptr) : QObject(parent) {}
+
+    const QString &id() const { return m_id; }
+    void setId(const QString &newId) { if (m_id != newId) { m_id = newId; emit idChanged(); } }
+    const QString &label() const { return m_label; }
+    void setLabel(const QString &newLabel) { if (m_label != newLabel) { m_label = newLabel; emit labelChanged(); } }
+
+signals:
+    void idChanged();
+    void labelChanged();
+};
+
+void LQObjectSerializerTest::test_caseNull()
+{
+    QScopedPointer<MyObject> i(new MyObject);
+    i->setId("myid");
+    i->setLabel(QString());
+
+    QVERIFY(!i->id().isNull());
+    QVERIFY(i->label().isNull());
+
+    QMetaObject mo = MyObject::staticMetaObject;
+    for (int j = mo.propertyOffset(); j < mo.propertyCount(); ++j) {
+        QMetaProperty mp = mo.property(j);
+        if (mp.name() == QString("id"))
+            QVERIFY(!mp.read(i.data()).isNull());
+        else if (mp.name() == QString("label"))
+            QVERIFY(mp.read(i.data()).isNull());
+    }
+}
 
 void LQObjectSerializerTest::test_case1()
 {
