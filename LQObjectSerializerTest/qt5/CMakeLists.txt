@@ -19,16 +19,16 @@ enable_testing()
 include_directories(../LQObjectSerializer)
 
 add_executable(LQObjectSerializerTest
-    tst_lqobjectserializertest.cpp
-    res.qrc
-    ../LQObjectSerializer/lserializer.cpp
+    ../tst_lqobjectserializertest.cpp
+    ../res.qrc
+    ../../LQObjectSerializer/lserializer.cpp
     )
 add_test(NAME LQObjectSerializerTest COMMAND LQObjectSerializerTest)
 
 add_executable(LGithubTestCase
-    tst_githubtestcase.cpp
-    res.qrc
-    ../LQObjectSerializer/lserializer.cpp
+    ../tst_githubtestcase.cpp
+    ../res.qrc
+    ../../LQObjectSerializer/lserializer.cpp
     )
 add_test(NAME LGithubTestCase COMMAND LGithubTestCase)
 

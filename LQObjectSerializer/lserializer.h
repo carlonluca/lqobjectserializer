@@ -1,4 +1,4 @@
-/**2
+/**
  * MIT License
  *
  * Copyright (c) 2020 Luca Carlon
@@ -37,6 +37,7 @@
 #include <QLoggingCategory>
 #include <QMutex>
 #include <QMetaMethod>
+#include <QSequentialIterable>
 #ifdef QT_DEBUG
 #include <QDebug>
 #endif
@@ -58,7 +59,7 @@ public:
     LSerializer();
     template<class T> QJsonObject serialize(void* object);
 
-protected:
+public:
     QJsonValue serializeObject(const void* value, const QMetaObject* metaObj);
     QJsonArray serializeArray(const QSequentialIterable &it);
     QJsonValue serializeValue(const QVariant& value);
@@ -210,14 +211,23 @@ template<class T>
 void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, void* dest)
 {
     qDebug() << "Deserialize array:" << metaProp.typeName() << metaProp.name();
-    QRegularExpressionMatch match = m_arrayTypeRegex.match(metaProp.typeName());
-    if (!match.hasMatch()) {
-        qWarning() << "Failed to deserialize array with type:" << metaProp.typeName();
-        return;
+    QString container;
+    QString type;
+    if (metaProp.typeName() == QStringLiteral("QStringList")) {
+        container = QStringLiteral("QList");
+        type = QStringLiteral("QString");
+    }
+    else {
+        QRegularExpressionMatch match = m_arrayTypeRegex.match(metaProp.typeName());
+        if (!match.hasMatch()) {
+            qWarning() << "Failed to deserialize array with type:" << metaProp.typeName();
+            return;
+        }
+
+        container = match.captured(1);
+        type = match.captured(2);
     }
 
-    QString container = match.captured(1);
-    QString type = match.captured(2);
     if (type == QStringLiteral("int"))
         writeProp(metaProp, dest, deserialize_array<int>(array, [] (const QJsonValue& jsonValue) -> int {
             return jsonValue.toInt();
@@ -265,6 +275,7 @@ void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTy
 
     if (!isGadget) {
         QObject* child = metaObject->newInstance();
+        bool isNull = child->property("label").toString().isNull();
         // TODO: Check errors.
         if (parent)
             child->setParent(parent);
@@ -310,7 +321,11 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         void* obj = instantiateObject(value, metaType, createGadget, parent);
         QVariant value_;
         if (createGadget)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            value_ = QVariant(metaType, &obj);
+#else
             value_ = QVariant(typeId, &obj);
+#endif
         else
             value_ = QVariant::fromValue<QObject*>(reinterpret_cast<QObject*>(obj));
         writeProp(metaProp, dest, value_, isGadget);

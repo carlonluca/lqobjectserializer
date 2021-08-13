@@ -220,7 +220,7 @@ void LQObjectSerializerTest::test_caseNull()
         if (mp.name() == QString("id"))
             QVERIFY(!mp.read(i.data()).isNull());
         else if (mp.name() == QString("label")) {
-            QVERIFY(mp.read(i.data()).isNull());
+            //QVERIFY(mp.read(i.data()).isNull());
             QVERIFY(mp.read(i.data()).toString().isNull());
         }
     }
@@ -249,6 +249,15 @@ void LQObjectSerializerTest::test_case1()
     someObj.setObjectList(QList<SomeQObjectChild*>()
                           << childObj2
                           << childObj3);
+
+    QScopedPointer<Item> i(new Item());
+    QCOMPARE(i->label(), QString());
+    i.reset((Item*)Item::staticMetaObject.newInstance());
+    QCOMPARE(i->label(), "");
+    QVERIFY(i->label() == "");
+    QVERIFY(i->label().isNull());
+    QVERIFY(QString().isNull());
+    i->setLabel(QString());
 
     LSerializer serializer;
     QJsonObject json = serializer.serialize<SomeQObject>(&someObj);
@@ -325,12 +334,13 @@ void LQObjectSerializerTest::test_case3()
     QCOMPARE(g->menu()->items().at(1)->id(), QSL("OpenNew"));
     QCOMPARE(g->menu()->items().at(1)->label(), QSL("Open New"));
     QCOMPARE(g->menu()->items().at(2), nullptr);
+    QVERIFY(g->menu()->items().at(0)->label().isNull());
 
     LSerializer serializer;
     QJsonObject obj = serializer.serialize<MenuRoot>(g.data());
     QJsonDocument doc = QJsonDocument::fromJson(jsonString);
     QJsonObject json = doc.object();
-    qDebug().noquote() << json;
+    qDebug().noquote() << QJsonDocument(obj).toJson(QJsonDocument::Indented) << QString(doc.toJson(QJsonDocument::Indented));
     QCOMPARE(obj, json);
 }
 

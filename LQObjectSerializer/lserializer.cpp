@@ -69,6 +69,8 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     case QMetaType::QVariantList:
         return serializeArray(value.value<QSequentialIterable>());
     case QMetaType::QString:
+        if (value.toString().isNull())
+            return QJsonValue::Undefined;
         return QJsonValue(value.toString());
     case QMetaType::Int:
     case QMetaType::UInt:
