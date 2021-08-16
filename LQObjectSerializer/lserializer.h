@@ -210,7 +210,9 @@ void LDeserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMeta
 template<class T>
 void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, void* dest)
 {
+#ifdef DEBUG_LQOBJECTSERIALIZER
     qDebug() << "Deserialize array:" << metaProp.typeName() << metaProp.name();
+#endif
     QString container;
     QString type;
     if (metaProp.typeName() == QStringLiteral("QStringList")) {

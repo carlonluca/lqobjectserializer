@@ -263,8 +263,6 @@ void LQObjectSerializerTest::test_case1()
     QJsonObject json = serializer.serialize<SomeQObject>(&someObj);
     QJsonDocument doc(json);
 
-    qDebug().noquote() << QString(doc.toJson(QJsonDocument::Indented));
-
     LDeserializer<SomeQObject> deserializer;
     QScopedPointer<SomeQObject> res(deserializer.deserialize(json));
 
@@ -340,7 +338,6 @@ void LQObjectSerializerTest::test_case3()
     QJsonObject obj = serializer.serialize<MenuRoot>(g.data());
     QJsonDocument doc = QJsonDocument::fromJson(jsonString);
     QJsonObject json = doc.object();
-    qDebug().noquote() << QJsonDocument(obj).toJson(QJsonDocument::Indented) << QString(doc.toJson(QJsonDocument::Indented));
     QCOMPARE(obj, json);
 }
 
