@@ -102,7 +102,7 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
         if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
             // TODO: leak
             uintptr_t pgadget;
-            QMetaType::construct(value.userType(), &pgadget, value.constData());
+            QMetaType(value.userType()).construct(&pgadget, value.constData());
             const void* gadget = reinterpret_cast<void*>(pgadget);
             if (!gadget)
                 return QJsonValue::Null;

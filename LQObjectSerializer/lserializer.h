@@ -105,8 +105,17 @@ protected:
                             bool isGadget,
                             QObject* parent);
 
+
+
 protected:
     void writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget);
+    int metatype_from_name(const QString& typeName) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        return QMetaType::fromName(typeName.toLatin1()).id();
+#else
+        return QMetaType::type(typeName.toLatin1().data());
+#endif
+    }
 
 private:
     QRegularExpression m_arrayTypeRegex;
@@ -256,7 +265,11 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
         }), false);
     else {
         // TODO: Implement gadget.
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        if (QMetaType::fromName(type.toLatin1()).id() != QMetaType::UnknownType)
+#else
         if (QMetaType::type(type.toLatin1().data()) != QMetaType::UnknownType)
+#endif
             deserializeObjectArray(array, metaProp.name(), type, reinterpret_cast<QObject*>(dest));
         else
             qWarning() << type << "is not known";
@@ -268,7 +281,7 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
 template<class T>
 void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaType& metaType, bool isGadget, QObject* parent)
 {
-    const QMetaObject* metaObject = QMetaType::metaObjectForType(metaType.id());
+    const QMetaObject* metaObject = metaType.metaObject();
     if (metaType.id() == QMetaType::UnknownType) {
         qCDebug(lserializer) << "Class not registered:"
                              << metaType.name() << metaObject->className();
@@ -286,7 +299,11 @@ void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTy
     }
     else {
         // TODO: mem?
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        void* gadget = QMetaType::fromName(metaObject->className()).create(nullptr);
+#else
         void* gadget = QMetaType::create(QMetaType::type(metaObject->className()));
+#endif
         deserializeJson(value.toObject(), gadget, metaObject);
         return gadget;
     }
@@ -315,7 +332,11 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         deserializeArray(value.toArray(), metaProp, dest);
         break;
     case QJsonValue::Object:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        int typeId = metaProp.metaType().id();
+#else
         int typeId = QMetaType::type(metaProp.typeName());
+#endif
         QMetaType metaType(typeId);
         bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
         // TODO: Check error.
@@ -355,8 +376,12 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
         if ((*it).type() == QJsonValue::Null || (*it).type() == QJsonValue::Undefined)
             addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(void*, nullptr));
         else {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            QMetaType metaType = QMetaType::fromName(type.toLatin1());
+#else
             int typeId = QMetaType::type(type.toLatin1());
             QMetaType metaType(typeId);
+#endif
             bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
             QObject* parent = !createGadget ? reinterpret_cast<QObject*>(dest) : nullptr;
             // TODO: Check error.
