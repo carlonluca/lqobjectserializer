@@ -290,8 +290,6 @@ void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTy
 
     if (!isGadget) {
         QObject* child = metaObject->newInstance();
-        bool isNull = child->property("label").toString().isNull();
-        // TODO: Check errors.
         if (parent)
             child->setParent(parent);
         deserializeJson(value.toObject(), child, metaObject);

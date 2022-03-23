@@ -35,3 +35,9 @@ add_test(NAME LGithubTestCase COMMAND LGithubTestCase)
 
 target_link_libraries(LQObjectSerializerTest PRIVATE Qt6::Core Qt6::Test Qt6::Network)
 target_link_libraries(LGithubTestCase PRIVATE Qt6::Core Qt6::Test Qt6::Network)
+
+if(MSVC)
+  target_compile_options(LQObjectSerializerTest PRIVATE /W4 /WX)
+else()
+  target_compile_options(LQObjectSerializerTest PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
