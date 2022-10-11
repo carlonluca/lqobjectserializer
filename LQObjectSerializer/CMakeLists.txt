@@ -1,20 +1,17 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 
-project(LQObjectSerializer LANGUAGES CXX)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+add_library(lqobjectserializer STATIC)
+target_sources(lqobjectserializer PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/lserializer.h
+    ${CMAKE_CURRENT_LIST_DIR}/lserializer.cpp
+)
 
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
+target_include_directories(lqobjectserializer
+    PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-find_package(Qt5Core)
-
-add_executable(LQObjectSerializer
-    lserializer.cpp
-    main.cpp
-    )
-target_link_libraries(LQObjectSerializer Qt5::Core)
+target_link_libraries(lqobjectserializer PRIVATE
+    Qt${QT_VERSION_MAJOR}::Core
+)
