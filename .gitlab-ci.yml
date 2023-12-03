@@ -52,7 +52,7 @@ Text_qt62:
 Test_qt66:
   stage: test_qt66
   image:
-    name: "carlonluca/qt-dev:6.6.0"
+    name: "carlonluca/qt-dev:6.6.1"
     entrypoint: [""]
   script:
     - cd LQObjectSerializerTest
