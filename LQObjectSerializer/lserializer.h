@@ -387,8 +387,10 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
 
     QJsonArray::const_iterator it = array.constBegin();
     while (it != array.constEnd()) {
-        if ((*it).type() == QJsonValue::Null || (*it).type() == QJsonValue::Undefined)
-            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(void*, nullptr));
+        if ((*it).type() == QJsonValue::Null || (*it).type() == QJsonValue::Undefined) {
+            if (!addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(void*, nullptr)))
+                qWarning(lserializer) << "Failed to invoke add method";
+        }
         else {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             QMetaType metaType = QMetaType::fromName(type.toLatin1());
@@ -396,14 +398,14 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
             int typeId = QMetaType::type(type.toLatin1());
             QMetaType metaType(typeId);
 #endif
-            bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
+            const bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
             QObject* parent = !createGadget ? reinterpret_cast<QObject*>(dest) : nullptr;
-            // TODO: Check error.
             void* obj = instantiateObject((*it).toObject(), metaType, createGadget, parent);
-            // TODO: Set parent.
-            //QVariant value_ = QVariant::fromValue(obj);
+            if (!obj)
+                continue;
 
-            addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(void*, obj));
+            if (!addMethod.invoke(dest, Qt::DirectConnection, Q_ARG(void*, obj)))
+                qWarning(lserializer) << "Failed to invoke add method";
         }
 
         ++it;
