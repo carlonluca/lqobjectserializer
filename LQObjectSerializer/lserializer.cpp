@@ -66,7 +66,6 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
         return QJsonValue::Undefined;
 
     QMetaType metaType(value.userType());
-    // TODO: Check.
     switch (metaType.id()) {
     case QMetaType::QVariantList:
     case QMetaType::QVariant:
@@ -124,14 +123,11 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
                 return serializeObject(gadget, metaType.metaObject());
         }
 
-        if (value.canConvert<QVariantList>())
-            return serializeArray(value.value<QSequentialIterable>());
-
-        const QMetaObject* metaObject = metaType.metaObject();
-        if (!metaObject)
-            break;
         break;
     }
+
+    if (value.canConvert<QVariantList>())
+        return serializeArray(value.value<QSequentialIterable>());
 
     return QJsonValue();
 }
