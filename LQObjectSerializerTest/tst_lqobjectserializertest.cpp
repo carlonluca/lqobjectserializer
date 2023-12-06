@@ -130,12 +130,20 @@ L_END_GADGET
 
 L_BEGIN_GADGET(KodiResponseResult)
 L_RW_GPROP(KodiResponseItem*, item, setItem, nullptr)
+public:
+    virtual ~KodiResponseResult() {
+        delete m_item;
+    }
 L_END_GADGET
 
 L_BEGIN_GADGET(KodiResponse)
 L_RW_GPROP(int, id, setId)
 L_RW_GPROP(QString, jsonrpc, setJsonrpc)
 L_RW_GPROP(KodiResponseResult*, result, setResult, nullptr)
+public:
+    virtual ~KodiResponse() {
+        delete m_result;
+    }
 L_END_GADGET
 
 L_BEGIN_GADGET(KodiResponseVariant)
@@ -418,10 +426,6 @@ void LQObjectSerializerTest::test_case5()
 
 void LQObjectSerializerTest::test_case6()
 {
-    KodiResponseResult r1;
-    KodiResponseItem r2;
-    KodiResponse r3;
-
     QFile jsonFile(":/json_5.json");
     QVERIFY(jsonFile.open(QIODevice::ReadOnly));
 
@@ -433,9 +437,6 @@ void LQObjectSerializerTest::test_case6()
     QVERIFY(m);
     QCOMPARE(m->id(), 12345);
     QCOMPARE(m->result()->item()->type(), QSL("channel"));
-
-    delete m->result()->item();
-    delete m->result();
 }
 
 void LQObjectSerializerTest::test_case7()
