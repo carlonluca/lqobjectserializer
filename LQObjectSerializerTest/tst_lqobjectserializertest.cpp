@@ -160,6 +160,7 @@ private slots:
     void test_case5();
     void test_case6();
     void test_case7();
+    void test_case8();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -450,6 +451,26 @@ void LQObjectSerializerTest::test_case7()
     QVERIFY(m);
     QCOMPARE(m->id(), 12345);
     QCOMPARE(m->result()["item"].toHash()["type"].toString(), QSL("channel"));
+}
+
+void LQObjectSerializerTest::test_case8()
+{
+    KodiResponseVariant response;
+    response.setId(0);
+    response.setResult(QVariantHash {
+        { QSL("author"), QSL("Luca Carlon") },
+        { QSL("dates"), QVariantHash {
+            { QSL("today"), QSL("2023.12.06") },
+            { QSL("yesterday"), QSL("2023.12.05") },
+        }},
+        { QSL("numbers"), QVariantList { 1, 2, 3 } }
+    });
+
+    LSerializer serializer;
+    QJsonObject json = serializer.serialize<KodiResponseVariant>(&response);
+    QCOMPARE(json["result"].toObject()["author"].toString(), QSL("Luca Carlon"));
+    QCOMPARE(json["result"].toObject()["dates"].toObject()["today"].toString(), QSL("2023.12.06"));
+    QCOMPARE(json["result"].toObject()["numbers"].toArray()[2].toInt(), 3);
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)

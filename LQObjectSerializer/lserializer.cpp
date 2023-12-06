@@ -67,7 +67,11 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     // TODO: Check.
     switch (metaType.id()) {
     case QMetaType::QVariantList:
-        return serializeArray(value.value<QSequentialIterable>());
+    case QMetaType::QVariant:
+    case QMetaType::QVariantHash:
+    case QMetaType::QVariantMap:
+    case QMetaType::QVariantPair:
+        return QJsonValue::fromVariant(value);
     case QMetaType::QString:
         if (value.toString().isNull())
             return QJsonValue::Undefined;
@@ -76,12 +80,11 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     case QMetaType::UInt:
     case QMetaType::Long:
     case QMetaType::LongLong:
-        return QJsonValue(value.toDouble());
-    case QMetaType::Bool:
-        return QJsonValue(value.toBool());
     case QMetaType::Float:
     case QMetaType::Double:
         return QJsonValue(value.toDouble());
+    case QMetaType::Bool:
+        return QJsonValue(value.toBool());
     case QMetaType::QObjectStar:
         if (!value.value<QObject*>())
             return QJsonValue::Null;
