@@ -413,6 +413,13 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
 template<class T>
 void LDeserializer<T>::writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget)
 {
+    if (!metaProp.isWritable()) {
+        qCWarning(lserializer) << "Prop"
+                               << metaProp.name()
+                               << "must be writable to deserialize";
+        return;
+    }
+
     bool success;
     if (isGadget)
         success = metaProp.writeOnGadget(dest, value);
