@@ -138,6 +138,12 @@ L_RW_GPROP(QString, jsonrpc, setJsonrpc)
 L_RW_GPROP(KodiResponseResult*, result, setResult, nullptr)
 L_END_GADGET
 
+L_BEGIN_GADGET(KodiResponseVariant)
+L_RW_GPROP(int, id, setId)
+L_RW_GPROP(QString, jsonrpc, setJsonrpc)
+L_RW_GPROP(QVariantHash, result, setResult)
+L_END_GADGET
+
 class LQObjectSerializerTest : public QObject
 {
     Q_OBJECT
@@ -153,6 +159,7 @@ private slots:
     void test_case4();
     void test_case5();
     void test_case6();
+    void test_case7();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -428,6 +435,21 @@ void LQObjectSerializerTest::test_case6()
 
     delete m->result()->item();
     delete m->result();
+}
+
+void LQObjectSerializerTest::test_case7()
+{
+    QFile jsonFile(":/json_5.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    QByteArray jsonString = jsonFile.readAll();
+
+    LDeserializer<KodiResponseVariant> deserializer;
+    QScopedPointer<KodiResponseVariant> m(deserializer.deserialize(jsonString));
+
+    QVERIFY(m);
+    QCOMPARE(m->id(), 12345);
+    QCOMPARE(m->result()["item"].toHash()["type"].toString(), QSL("channel"));
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)

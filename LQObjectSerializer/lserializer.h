@@ -312,6 +312,24 @@ void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTy
 template<class T>
 void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, void* dest, bool isGadget)
 {
+    const QMetaType metaType = metaProp.metaType();
+    switch (metaType.id()) {
+    case QMetaType::QVariant:
+        writeProp(metaProp, dest, value.toVariant(), isGadget);
+        return;
+    case QMetaType::QVariantHash:
+        writeProp(metaProp, dest, value.toVariant().toHash(), isGadget);
+        return;
+    case QMetaType::QVariantMap:
+        writeProp(metaProp, dest, value.toVariant().toMap(), isGadget);
+        return;
+    case QMetaType::QVariantList:
+        writeProp(metaProp, dest, value.toVariant().toList(), isGadget);
+        return;
+    default:
+        break;
+    }
+
     switch (value.type()) {
     case QJsonValue::Null:
     case QJsonValue::Undefined:
