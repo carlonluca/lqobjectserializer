@@ -38,9 +38,7 @@
 #include <QMutex>
 #include <QMetaMethod>
 #include <QSequentialIterable>
-#ifdef QT_DEBUG
 #include <QDebug>
-#endif
 
 #include "../deps/lqtutils/lqtutils_prop.h"
 
@@ -415,10 +413,15 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
 template<class T>
 void LDeserializer<T>::writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget)
 {
+    bool success;
     if (isGadget)
-        metaProp.writeOnGadget(dest, value);
+        success = metaProp.writeOnGadget(dest, value);
     else
-        metaProp.write(reinterpret_cast<QObject*>(dest), value);
+        success = metaProp.write(reinterpret_cast<QObject*>(dest), value);
+
+    if (!success)
+        qCWarning(lserializer) << "Failed to write" << value
+                               << "to" << metaProp.name();
 }
 
 #endif // LCSERIALIZER_H
