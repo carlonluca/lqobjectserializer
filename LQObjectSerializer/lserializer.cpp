@@ -24,6 +24,8 @@
 
 #include <QMutex>
 
+#include "../deps/lqtutils/lqtutils_autoexec.h"
+
 #include "lserializer.h"
 
 Q_LOGGING_CATEGORY(lserializer, "lserializer")
@@ -105,10 +107,13 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
         }
 
         if (metaType.flags().testFlag(QMetaType::PointerToGadget)) {
-            // TODO: leak
+            // NOTE: this could probably be improved.
             uintptr_t pgadget;
-            QMetaType(value.userType()).construct(&pgadget, value.constData());
-            const void* gadget = reinterpret_cast<void*>(pgadget);
+            metaType.construct(&pgadget, value.constData());
+            void* gadget = reinterpret_cast<void*>(pgadget);
+            lqt::AutoExec exec([&metaType, gadget] {
+                metaType.destruct(gadget);
+            });
             if (!gadget)
                 return QJsonValue::Null;
             else
