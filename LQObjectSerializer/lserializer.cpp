@@ -86,6 +86,10 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     case QMetaType::LongLong:
     case QMetaType::Float:
     case QMetaType::Double:
+    case QMetaType::Short:
+    case QMetaType::ULong:
+    case QMetaType::ULongLong:
+    case QMetaType::UShort:
         return QJsonValue(value.toDouble());
     case QMetaType::Bool:
         return QJsonValue(value.toBool());
