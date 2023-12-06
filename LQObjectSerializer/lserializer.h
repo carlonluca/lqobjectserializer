@@ -310,8 +310,13 @@ void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTy
 template<class T>
 void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, void* dest, bool isGadget)
 {
-    const QMetaType metaType = metaProp.metaType();
-    switch (metaType.id()) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    int typeId = metaProp.metaType().id();
+#else
+    int typeId = QMetaType::type(metaProp.typeName());
+#endif
+
+    switch (typeId) {
     case QMetaType::QVariant:
         writeProp(metaProp, dest, value.toVariant(), isGadget);
         return;
@@ -346,11 +351,6 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
         deserializeArray(value.toArray(), metaProp, dest);
         break;
     case QJsonValue::Object:
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        int typeId = metaProp.metaType().id();
-#else
-        int typeId = QMetaType::type(metaProp.typeName());
-#endif
         QMetaType metaType(typeId);
         bool createGadget = metaType.flags().testFlag(QMetaType::PointerToGadget);
         // TODO: Check error.

@@ -70,7 +70,9 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     case QMetaType::QVariant:
     case QMetaType::QVariantHash:
     case QMetaType::QVariantMap:
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     case QMetaType::QVariantPair:
+#endif
         return QJsonValue::fromVariant(value);
     case QMetaType::QString:
         if (value.toString().isNull())
