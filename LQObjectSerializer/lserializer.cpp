@@ -131,5 +131,6 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     if (value.canConvert<QString>())
         return QJsonValue(value.toString());
 
+    qCDebug(lserializer) << "Unable to serialize type:" << metaType.name();
     return QJsonValue();
 }
