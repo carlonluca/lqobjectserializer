@@ -179,6 +179,7 @@ L_BEGIN_GADGET(CustomTypes)
 L_RW_GPROP_AS(MyRect, myRect, MyRect(0.1, 0.2, 0.3, 0.4))
 L_RW_GPROP_AS(NotSerializable, notSerializable)
 L_END_GADGET
+Q_DECLARE_METATYPE(MyRect)
 
 class LQObjectSerializerTest : public QObject
 {
@@ -224,6 +225,7 @@ LQObjectSerializerTest::LQObjectSerializerTest()
     qRegisterMetaType<KodiResponseItem>();
     qRegisterMetaType<KodiResponseResult>();
     qRegisterMetaType<KodiResponse>();
+    qRegisterMetaType<MyRect>();
 
     QMetaType::registerConverter<MyRect, QString>();
 }
