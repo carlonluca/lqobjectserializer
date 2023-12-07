@@ -152,6 +152,28 @@ L_RW_GPROP(QString, jsonrpc, setJsonrpc)
 L_RW_GPROP(QVariantHash, result, setResult)
 L_END_GADGET
 
+class MyRect : public QRectF
+{
+public:
+    MyRect() : QRectF() {}
+    MyRect(qreal x, qreal y, qreal w, qreal h) : QRectF(x, y, w, h) {}
+    MyRect(const MyRect& r) : QRectF(r.x(), r.y(), r.width(), r.height()) {}
+    MyRect& operator=(const MyRect& r) {
+        this->setX(r.x());
+        this->setY(r.y());
+        this->setWidth(r.width());
+        this->setHeight(r.height());
+        return *this;
+    }
+    operator QString() const {
+        return lqt::string_from_rect(*this);
+    }
+};
+
+L_BEGIN_GADGET(CustomTypes)
+L_RW_GPROP_AS(MyRect, myRect, MyRect(0.1, 0.2, 0.3, 0.4))
+L_END_GADGET
+
 class LQObjectSerializerTest : public QObject
 {
     Q_OBJECT
@@ -169,6 +191,7 @@ private slots:
     void test_case6();
     void test_case7();
     void test_case8();
+    void test_case9();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -195,6 +218,8 @@ LQObjectSerializerTest::LQObjectSerializerTest()
     qRegisterMetaType<KodiResponseItem>();
     qRegisterMetaType<KodiResponseResult>();
     qRegisterMetaType<KodiResponse>();
+
+    QMetaType::registerConverter<MyRect, QString>();
 }
 
 LQObjectSerializerTest::~LQObjectSerializerTest()
@@ -472,6 +497,16 @@ void LQObjectSerializerTest::test_case8()
     QCOMPARE(json["result"].toObject()["author"].toString(), QSL("Luca Carlon"));
     QCOMPARE(json["result"].toObject()["dates"].toObject()["today"].toString(), QSL("2023.12.06"));
     QCOMPARE(json["result"].toObject()["numbers"].toArray()[2].toInt(), 3);
+}
+
+void LQObjectSerializerTest::test_case9()
+{
+    CustomTypes customTypes;
+
+    LSerializer serializer;
+    QJsonObject json = serializer.serialize<CustomTypes>(&customTypes);
+
+    QCOMPARE(json["myRect"].toString(), QSL("0.1,0.2,0.3,0.4"));
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)
