@@ -156,9 +156,9 @@ L_END_GADGET
 typedef QHash<QString, int> QHashStringInt;
 typedef QMap<QString, QVariant> QMapStringInt;
 typedef QMap<QString, QObject*> QMapStringObj;
-Q_DECLARE_METATYPE(QHashStringInt);
-Q_DECLARE_METATYPE(QMapStringInt);
-Q_DECLARE_METATYPE(QMapStringObj);
+Q_DECLARE_METATYPE(QHashStringInt)
+Q_DECLARE_METATYPE(QMapStringInt)
+Q_DECLARE_METATYPE(QMapStringObj)
 
 L_BEGIN_GADGET(HashTest)
 L_RW_GPROP_AS(QHashStringInt, test1)
@@ -189,7 +189,7 @@ struct NotSerializable
 {
     QString someString;
 };
-Q_DECLARE_METATYPE(NotSerializable);
+Q_DECLARE_METATYPE(NotSerializable)
 
 L_BEGIN_GADGET(CustomTypes)
 L_RW_GPROP_AS(MyRect, myRect, MyRect(0.1, 0.2, 0.3, 0.4))
