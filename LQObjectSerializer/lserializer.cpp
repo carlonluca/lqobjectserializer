@@ -68,13 +68,14 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     QMetaType metaType(value.userType());
     switch (metaType.id()) {
     case QMetaType::QVariantList:
+        return serializeArray(value.value<QSequentialIterable>());
     case QMetaType::QVariant:
+        // Try to convert.
+        break;
     case QMetaType::QVariantHash:
+        return serializeDictionary(value.toHash());
     case QMetaType::QVariantMap:
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    case QMetaType::QVariantPair:
-#endif
-        return QJsonValue::fromVariant(value);
+        return serializeDictionary(value.toMap());
     case QMetaType::QString:
         if (value.toString().isNull())
             return QJsonValue::Undefined;
