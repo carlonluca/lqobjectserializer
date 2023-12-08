@@ -128,6 +128,10 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
 
     if (value.canConvert<QVariantList>())
         return serializeArray(value.value<QSequentialIterable>());
+    if (value.canConvert<QVariantHash>())
+        return serializeDictionary(value.value<QVariantHash>());
+    if (value.canConvert<QVariantMap>())
+        return serializeDictionary(value.value<QVariantMap>());
     if (value.canConvert<QString>())
         return QJsonValue(value.toString());
 

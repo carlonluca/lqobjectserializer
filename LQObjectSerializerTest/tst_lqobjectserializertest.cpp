@@ -23,6 +23,7 @@
  **/
 
 #include <QtTest>
+#include <QObject>
 
 #include "../LQObjectSerializer/lserializer.h"
 #include "../deps/lqtutils/lqtutils_string.h"
@@ -152,6 +153,17 @@ L_RW_GPROP(QString, jsonrpc, setJsonrpc)
 L_RW_GPROP(QVariantHash, result, setResult)
 L_END_GADGET
 
+typedef QHash<QString, int> QHashStringInt;
+typedef QMap<QString, QVariant> QMapStringInt;
+typedef QMap<QString, QObject*> QMapStringObj;
+
+L_BEGIN_GADGET(HashTest)
+L_RW_GPROP_AS(QHashStringInt, test1)
+L_RW_GPROP_AS(QMapStringInt, test2)
+L_RW_GPROP_AS(QMapStringObj, test3)
+L_RW_GPROP_AS(QList<QObject*>, test4)
+L_END_GADGET
+
 class MyRect : public QRectF
 {
 public:
@@ -199,6 +211,8 @@ private slots:
     void test_case7();
     void test_case8();
     void test_case9();
+    void test_case10();
+    void test_case11();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -515,6 +529,39 @@ void LQObjectSerializerTest::test_case9()
     QJsonObject json = serializer.serialize<CustomTypes>(&customTypes);
 
     QCOMPARE(json["myRect"].toString(), QSL("0.1,0.2,0.3,0.4"));
+}
+
+void LQObjectSerializerTest::test_case10()
+{
+    HashTest hashTest;
+    hashTest.set_test1({ { QSL("test1"), 1 }, { QSL("test2"), 2 } });
+    hashTest.set_test2({ { QSL("test1"), 1 }, { QSL("test2"), 2 } });
+
+    LSerializer serializer;
+    QJsonObject json = serializer.serialize<HashTest>(&hashTest);
+
+    QCOMPARE(json["test1"].toObject()["test1"].toInt(), 1);
+    QCOMPARE(json["test1"].toObject()["test2"].toInt(), 2);
+    QCOMPARE(json["test2"].toObject()["test1"].toInt(), 1);
+    QCOMPARE(json["test2"].toObject()["test2"].toInt(), 2);
+}
+
+void LQObjectSerializerTest::test_case11()
+{
+    QScopedPointer<QObject> qo1(new QObject);
+    qo1->setObjectName(QSL("Name1"));
+    QScopedPointer<QObject> qo2(new QObject);
+    qo2->setObjectName(QSL("Name2"));
+
+    HashTest hashTest;
+    hashTest.set_test3({ { QSL("test1"), qo1.data() }, { QSL("test2"), qo2.data() } });
+    hashTest.set_test4({ qo1.data(), qo2.data() });
+
+    LSerializer serializer;
+    QJsonObject json = serializer.serialize<HashTest>(&hashTest);
+
+    QCOMPARE(json["test4"].toArray()[0].toObject()["objectName"], "Name1");
+    QCOMPARE(json["test3"].toObject()["test1"].toObject()["objectName"], "Name1");
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)

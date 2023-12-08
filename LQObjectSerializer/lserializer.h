@@ -59,9 +59,25 @@ public:
 
 public:
     QJsonValue serializeObject(const void* value, const QMetaObject* metaObj);
-    QJsonArray serializeArray(const QSequentialIterable &it);
+    QJsonArray serializeArray(const QSequentialIterable& it);
+    template<typename T>
+    QJsonValue serializeDictionary(const T& variant);
     QJsonValue serializeValue(const QVariant& value);
 };
+
+template<typename T>
+QJsonValue LSerializer::serializeDictionary(const T& variant)
+{
+    QJsonObject ret;
+    for (auto it = variant.constBegin(), end = variant.constEnd(); it != end; it++) {
+        const QJsonValue v = serializeValue(*it);
+        if (v.isNull())
+            continue;
+        ret[it.key()] = v;
+    }
+
+    return ret;
+}
 
 template<class T>
 QJsonObject LSerializer::serialize(void* object)
