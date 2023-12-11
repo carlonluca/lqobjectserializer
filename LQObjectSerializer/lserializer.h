@@ -55,7 +55,7 @@ class LSerializer
 {
 public:
     LSerializer();
-    template<class T> QJsonObject serialize(void* object);
+    template<class T> QJsonObject serialize(T* object);
     template<class T> QJsonArray serialize(const QList<T>& array);
 
 public:
@@ -81,7 +81,7 @@ QJsonValue LSerializer::serializeDictionary(const T& variant)
 }
 
 template<class T>
-QJsonObject LSerializer::serialize(void* object)
+QJsonObject LSerializer::serialize(T* object)
 {
     return !object ? QJsonObject() : serializeObject(object, &T::staticMetaObject).toObject();
 }
