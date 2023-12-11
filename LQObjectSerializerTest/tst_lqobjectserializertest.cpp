@@ -584,6 +584,11 @@ void LQObjectSerializerTest::test_case12()
     QCOMPARE(json.size(), list.size());
     for (int i = 0; i < 100; i++)
         QCOMPARE(json[i].toInt(), i);
+
+    QList<double> _list = LDeserializer<int>().deserializeNumberArray(json);
+
+    for (int i = 0; i < _list.size(); i++)
+        QVERIFY(_list[i] - i < 1E-6);
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)
