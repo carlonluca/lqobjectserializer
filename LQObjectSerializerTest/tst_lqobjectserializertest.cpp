@@ -217,6 +217,7 @@ private slots:
     void test_case9();
     void test_case10();
     void test_case11();
+    void test_case12();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -570,6 +571,19 @@ void LQObjectSerializerTest::test_case11()
 
     QCOMPARE(json["test4"].toArray()[0].toObject()["objectName"], "Name1");
     QCOMPARE(json["test3"].toObject()["test1"].toObject()["objectName"], "Name1");
+}
+
+void LQObjectSerializerTest::test_case12()
+{
+    QList<int> list;
+    for (int i = 0; i < 100; i++)
+        list.append(i);
+
+    QJsonArray json = LSerializer().serialize(list);
+
+    QCOMPARE(json.size(), list.size());
+    for (int i = 0; i < 100; i++)
+        QCOMPARE(json[i].toInt(), i);
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)
