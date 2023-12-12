@@ -38,13 +38,18 @@ QJsonValue LSerializer::serializeObject(const void* object, const QMetaObject* m
     QJsonObject json;
     bool isGadget = !metaObj->inherits(&QObject::staticMetaObject);
 
-    for (int i = metaObj->propertyOffset(); i < metaObj->propertyCount(); ++i) {
+    for (int i = 0; i < metaObj->propertyCount(); ++i) {
         QMetaProperty metaProp = metaObj->property(i);
         QVariant value;
         if (isGadget)
             value = metaProp.readOnGadget(object);
         else
             value = metaProp.read(reinterpret_cast<const QObject*>(object));
+
+        // This is the case of objectName. Only add it to the json if it is not empty.
+        if (metaProp.enclosingMetaObject() == &QObject::staticMetaObject && value.toString().isEmpty())
+            continue;
+
         QJsonValue jsonValue = serializeValue(value);
         json[metaProp.name()] = jsonValue;
     }

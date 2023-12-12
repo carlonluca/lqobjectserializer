@@ -197,6 +197,14 @@ L_RW_GPROP_AS(NotSerializable, notSerializable)
 L_END_GADGET
 Q_DECLARE_METATYPE(MyRect)
 
+class InheritedType : public Menu
+{
+    Q_OBJECT
+    L_RW_PROP_AS(QString, title, 0)
+public:
+    InheritedType(QObject* parent = nullptr) : Menu(parent) {}
+};
+
 class LQObjectSerializerTest : public QObject
 {
     Q_OBJECT
@@ -206,6 +214,7 @@ public:
 
 private slots:
     void test_caseNull();
+    void test_objectName();
     void test_case1();
     void test_case2();
     void test_case3();
@@ -218,6 +227,7 @@ private slots:
     void test_case10();
     void test_case11();
     void test_case12();
+    void test_case13();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -298,6 +308,20 @@ void LQObjectSerializerTest::test_caseNull()
     }
 }
 
+void LQObjectSerializerTest::test_objectName()
+{
+    {
+        QObject qobj;
+        qobj.setObjectName("HELLO");
+        QCOMPARE(LSerializer().serialize(&qobj)["objectName"].toString(), "HELLO");
+    }
+
+    {
+        QObject qobj;
+        QVERIFY(!LSerializer().serialize(&qobj).contains("objectName"));
+    }
+}
+
 void LQObjectSerializerTest::test_case1()
 {
     SomeQObjectChild childObj;
@@ -333,7 +357,6 @@ void LQObjectSerializerTest::test_case1()
 
     LSerializer serializer;
     QJsonObject json = serializer.serialize<SomeQObject>(&someObj);
-    QJsonDocument doc(json);
 
     LDeserializer<SomeQObject> deserializer;
     QScopedPointer<SomeQObject> res(deserializer.deserialize(json));
@@ -589,6 +612,18 @@ void LQObjectSerializerTest::test_case12()
 
     for (int i = 0; i < _list.size(); i++)
         QVERIFY(_list[i] - i < 1E-6);
+}
+
+void LQObjectSerializerTest::test_case13()
+{
+    InheritedType t;
+    t.setHeader(QSL("header"));
+    t.set_title(QSL("title"));
+
+    QJsonObject json = LSerializer().serialize(&t);
+
+    QCOMPARE(t.header(), json["header"].toString());
+    QCOMPARE(t.title(), json["title"].toString());
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)
