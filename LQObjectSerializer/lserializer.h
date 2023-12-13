@@ -41,6 +41,7 @@
 #include <QDebug>
 
 #include "../deps/lqtutils/lqtutils_prop.h"
+#include "../deps/lqtutils/lqtutils_string.h"
 
 Q_DECLARE_LOGGING_CATEGORY(lserializer)
 
@@ -51,19 +52,57 @@ Q_DECLARE_LOGGING_CATEGORY(lserializer)
 
 class QObject;
 
+class LStringifier
+{
+public:
+    virtual QString stringify(const QVariant&) { return QString(); }
+    virtual QVariant destringify(const QString&) { return QVariant(); }
+};
+
+class LRectStringifier : public LStringifier
+{
+public:
+    QString stringify(const QVariant& v) override {
+        if (v.isNull() || !v.canConvert<QRect>())
+            return QString();
+        return lqt::string_from_rect(v.value<QRect>());
+    }
+
+    QVariant destringify(const QString& /* s */) override {
+        return QVariant();
+    }
+};
+
+class LPointStringifier : public LStringifier
+{
+public:
+    QString stringify(const QVariant& v) override {
+        if (v.isNull() || !v.canConvert<QPointF>())
+            return QString();
+        return lqt::string_from_point(v.value<QPointF>());
+    }
+
+    QVariant destringify(const QString& /* s */) override {
+        return QVariant();
+    }
+};
+
 class LSerializer
 {
 public:
-    LSerializer();
+    LSerializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers = QHash<QString, QSharedPointer<LStringifier>>());
     template<class T> QJsonObject serialize(T* object);
-    template<class T> QJsonArray serialize(const QList<T>& array);
+    template<class T> QJsonArray serialize(const QList<T>& array, const QMetaObject* metaObject = nullptr);
 
 public:
     QJsonValue serializeObject(const void* value, const QMetaObject* metaObj);
-    QJsonArray serializeArray(const QSequentialIterable& it);
+    QJsonArray serializeArray(const QSequentialIterable& it, const QMetaObject* metaObject);
     template<typename T>
     QJsonValue serializeDictionary(const T& variant);
-    QJsonValue serializeValue(const QVariant& value);
+    QJsonValue serializeValue(const char* propName, const QVariant& value, const QMetaObject* metaObject);
+
+private:
+    QHash<QString, QSharedPointer<LStringifier>> m_stringifiers;
 };
 
 template<typename T>
@@ -71,7 +110,7 @@ QJsonValue LSerializer::serializeDictionary(const T& variant)
 {
     QJsonObject ret;
     for (auto it = variant.constBegin(), end = variant.constEnd(); it != end; it++) {
-        const QJsonValue v = serializeValue(*it);
+        const QJsonValue v = serializeValue(it.key().toLocal8Bit(), *it, nullptr);
         if (v.isNull())
             continue;
         ret[it.key()] = v;
@@ -87,10 +126,10 @@ QJsonObject LSerializer::serialize(T* object)
 }
 
 template<class T>
-QJsonArray LSerializer::serialize(const QList<T>& array)
+QJsonArray LSerializer::serialize(const QList<T>& array, const QMetaObject* metaObject)
 {
     QVariant list = QVariant::fromValue(array);
-    return serializeArray(list.value<QSequentialIterable>());
+    return serializeArray(list.value<QSequentialIterable>(), metaObject);
 }
 
 template<class T>

@@ -228,6 +228,7 @@ private slots:
     void test_case11();
     void test_case12();
     void test_case13();
+    void test_case14();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -624,6 +625,73 @@ void LQObjectSerializerTest::test_case13()
 
     QCOMPARE(t.header(), json["header"].toString());
     QCOMPARE(t.title(), json["title"].toString());
+}
+
+struct MyCustomStruct
+{
+    QString name = QSL("Luca");
+    QString surname = QSL("Carlon");
+    bool operator==(const MyCustomStruct& other) {
+        return name == other.name && surname == other.surname;
+    }
+};
+
+class MyCustomStructStringifier : public LStringifier
+{
+public:
+    QString stringify(const QVariant& v) override {
+        if (v.isNull() || !v.canConvert<MyCustomStruct>())
+            return QString();
+        const MyCustomStruct cs = v.value<MyCustomStruct>();
+        return QString("%1,%2").arg(cs.name, cs.surname);
+    }
+
+    QVariant destringify(const QString& /* s */) override {
+        return QVariant();
+    }
+};
+
+L_BEGIN_CLASS(CustomSerializationChild)
+Q_CLASSINFO("myPointF", "pointxy")
+L_RW_PROP_REF_AS(QPointF, myPointF, QPointF(2.2, 3.3))
+L_END_CLASS
+
+L_BEGIN_CLASS(CustomSerialization)
+Q_CLASSINFO("myRect", "rectxywh")
+Q_CLASSINFO("myPoint", "pointxy")
+Q_CLASSINFO("customStruct", "cs")
+L_RW_PROP_AS(QRect, myRect, QRect(1, 2, 3, 4))
+L_RW_PROP_AS(QPoint, myPoint, QPoint(1, 2))
+L_RW_PROP_AS(CustomSerializationChild*, myChild, new CustomSerializationChild(this))
+L_RW_PROP_REF_AS(MyCustomStruct, customStruct)
+L_END_CLASS
+
+void LQObjectSerializerTest::test_case14()
+{
+    CustomSerialization cs;
+    const QHash<QString, QSharedPointer<LStringifier>> stringifiers = {
+        { QSL("rectxywh"), QSharedPointer<LStringifier>(new LRectStringifier) },
+        { QSL("pointxy"), QSharedPointer<LStringifier>(new LPointStringifier) },
+        { QSL("cs"), QSharedPointer<LStringifier>(new MyCustomStructStringifier) }
+    };
+    QJsonObject json = LSerializer(stringifiers).serialize(&cs);
+    QCOMPARE(json["myRect"].toString(), QSL("1,2,3,4"));
+    QCOMPARE(json["myPoint"].toString(), QSL("1,2"));
+    QCOMPARE(json["customStruct"].toString(), QSL("Luca,Carlon"));
+    QCOMPARE(json["myChild"].toObject()["myPointF"], QSL("2.2,3.3"));
+
+    QList<CustomSerialization*> list {
+        new CustomSerialization,
+        new CustomSerialization
+    };
+    list[0]->set_myPoint(QPoint(10, 11));
+    list[1]->set_myPoint(QPoint(20, 21));
+    list[1]->customStruct().name = "Mario";
+    list[1]->customStruct().surname = "Rossi";
+    QJsonArray array = LSerializer(stringifiers).serialize(list, &CustomSerialization::staticMetaObject);
+    QCOMPARE(array[0].toObject()["myPoint"].toString(), QSL("10,11"));
+    QCOMPARE(array[1].toObject()["myPoint"].toString(), QSL("20,21"));
+    QCOMPARE(array[1].toObject()["customStruct"].toString(), QSL("Mario,Rossi"));
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)

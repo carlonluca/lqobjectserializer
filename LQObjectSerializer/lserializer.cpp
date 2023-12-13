@@ -30,8 +30,8 @@
 
 Q_LOGGING_CATEGORY(lserializer, "lserializer")
 
-LSerializer::LSerializer()
-{}
+LSerializer::LSerializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers) :
+    m_stringifiers(stringifiers) {}
 
 QJsonValue LSerializer::serializeObject(const void* object, const QMetaObject* metaObj)
 {
@@ -50,22 +50,22 @@ QJsonValue LSerializer::serializeObject(const void* object, const QMetaObject* m
         if (metaProp.enclosingMetaObject() == &QObject::staticMetaObject && value.toString().isEmpty())
             continue;
 
-        QJsonValue jsonValue = serializeValue(value);
+        QJsonValue jsonValue = serializeValue(metaProp.name(), value, metaProp.enclosingMetaObject());
         json[metaProp.name()] = jsonValue;
     }
 
     return json;
 }
 
-QJsonArray LSerializer::serializeArray(const QSequentialIterable& it)
+QJsonArray LSerializer::serializeArray(const QSequentialIterable& it, const QMetaObject* metaObject)
 {
     QJsonArray ret;
-    for (const QVariant& variant: it)
-        ret.append(serializeValue(variant));
+    for (const QVariant& variant : it)
+        ret.append(serializeValue(nullptr, variant, metaObject));
     return ret;
 }
 
-QJsonValue LSerializer::serializeValue(const QVariant& value)
+QJsonValue LSerializer::serializeValue(const char* propName, const QVariant& value, const QMetaObject* metaObject)
 {
     if (value.isNull())
         return QJsonValue::Undefined;
@@ -73,7 +73,7 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
     QMetaType metaType(value.userType());
     switch (metaType.id()) {
     case QMetaType::QVariantList:
-        return serializeArray(value.value<QSequentialIterable>());
+        return serializeArray(value.value<QSequentialIterable>(), metaObject);
     case QMetaType::QVariant:
         // Try to convert.
         break;
@@ -132,8 +132,19 @@ QJsonValue LSerializer::serializeValue(const QVariant& value)
         break;
     }
 
+    if (metaObject) {
+        const int classInfoIndex = metaObject->indexOfClassInfo(propName);
+        if (classInfoIndex >= 0) {
+            const QString stringifierName = QString(metaObject->classInfo(classInfoIndex).value());
+            if (m_stringifiers.contains(stringifierName)) {
+                auto stringifier = m_stringifiers.value(stringifierName);
+                if (stringifier)
+                    return stringifier->stringify(value);
+            }
+        }
+    }
     if (value.canConvert<QVariantList>())
-        return serializeArray(value.value<QSequentialIterable>());
+        return serializeArray(value.value<QSequentialIterable>(), metaObject);
     if (value.canConvert<QVariantHash>())
         return serializeDictionary(value.value<QVariantHash>());
     if (value.canConvert<QVariantMap>())
