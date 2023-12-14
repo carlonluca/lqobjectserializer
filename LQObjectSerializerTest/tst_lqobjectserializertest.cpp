@@ -629,8 +629,8 @@ void LQObjectSerializerTest::test_case13()
 
 struct MyCustomStruct
 {
-    QString name = QSL("Luca");
-    QString surname = QSL("Carlon");
+    QString name;
+    QString surname;
     bool operator==(const MyCustomStruct& other) {
         return name == other.name && surname == other.surname;
     }
@@ -646,8 +646,11 @@ public:
         return QString("%1,%2").arg(cs.name, cs.surname);
     }
 
-    QVariant destringify(const QString& /* s */) override {
-        return QVariant();
+    QVariant destringify(const QString& s) override {
+        MyCustomStruct cs;
+        cs.name = s.split(',')[0];
+        cs.surname = s.split(',')[1];
+        return QVariant::fromValue(cs);
     }
 };
 
@@ -660,15 +663,24 @@ L_BEGIN_CLASS(CustomSerialization)
 Q_CLASSINFO("myRect", "rectxywh")
 Q_CLASSINFO("myPoint", "pointxy")
 Q_CLASSINFO("customStruct", "cs")
-L_RW_PROP_AS(QRect, myRect, QRect(1, 2, 3, 4))
-L_RW_PROP_AS(QPoint, myPoint, QPoint(1, 2))
+L_RW_PROP_AS(QRect, myRect, QRect())
+L_RW_PROP_AS(QPoint, myPoint, QPoint())
 L_RW_PROP_AS(CustomSerializationChild*, myChild, new CustomSerializationChild(this))
 L_RW_PROP_REF_AS(MyCustomStruct, customStruct)
 L_END_CLASS
 
 void LQObjectSerializerTest::test_case14()
 {
+    MyCustomStruct cstruct;
+    cstruct.name = "Luca";
+    cstruct.surname = "Carlon";
+
     CustomSerialization cs;
+    cs.set_myRect(QRect(1, 2, 3, 4));
+    cs.set_myPoint(QPoint(1, 2));
+    cs.set_customStruct(cstruct);
+    cs.myChild()->set_myPointF(QPointF(2.2, 3.3));
+
     const QHash<QString, QSharedPointer<LStringifier>> stringifiers = {
         { QSL("rectxywh"), QSharedPointer<LStringifier>(new LRectStringifier) },
         { QSL("pointxy"), QSharedPointer<LStringifier>(new LPointStringifier) },
@@ -679,6 +691,13 @@ void LQObjectSerializerTest::test_case14()
     QCOMPARE(json["myPoint"].toString(), QSL("1,2"));
     QCOMPARE(json["customStruct"].toString(), QSL("Luca,Carlon"));
     QCOMPARE(json["myChild"].toObject()["myPointF"], QSL("2.2,3.3"));
+
+    LDeserializer<CustomSerialization> des(stringifiers);
+    QScopedPointer<CustomSerialization> desCs(des.deserialize(json));
+
+    QCOMPARE(desCs->myRect(), QRect(1, 2, 3, 4));
+    QCOMPARE(desCs->myPoint(), QPoint(1, 2));
+    QCOMPARE(desCs->customStruct().name, QSL("Luca"));
 
     QList<CustomSerialization*> list {
         new CustomSerialization,

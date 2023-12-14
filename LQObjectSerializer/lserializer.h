@@ -63,13 +63,14 @@ class LRectStringifier : public LStringifier
 {
 public:
     QString stringify(const QVariant& v) override {
-        if (v.isNull() || !v.canConvert<QRect>())
+        if (v.isNull() || !v.canConvert<QRectF>())
             return QString();
-        return lqt::string_from_rect(v.value<QRect>());
+        return lqt::string_from_rect(v.value<QRectF>());
     }
 
-    QVariant destringify(const QString& /* s */) override {
-        return QVariant();
+    QVariant destringify(const QString& s) override {
+        QRectF ret = lqt::string_to_rect(s);
+        return QVariant::fromValue(ret);
     }
 };
 
@@ -82,8 +83,9 @@ public:
         return lqt::string_from_point(v.value<QPointF>());
     }
 
-    QVariant destringify(const QString& /* s */) override {
-        return QVariant();
+    QVariant destringify(const QString& s) override {
+        QPointF p = lqt::string_to_point(s);
+        return QVariant::fromValue(p);
     }
 };
 
@@ -136,7 +138,7 @@ template<class T>
 class LDeserializer
 {
 public:
-    LDeserializer();
+    LDeserializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers = QHash<QString, QSharedPointer<LStringifier>>());
     T* deserialize(const QJsonObject& json);
     T* deserialize(const QString& jsonString);
     QList<QString> deserializeStringArray(const QJsonArray& array);
@@ -153,7 +155,8 @@ protected:
     void deserializeValue(const QJsonValue& value,
                           const QMetaProperty& metaProp,
                           void* dest,
-                          bool isGadget);
+                          bool isGadget,
+                          const QMetaObject* metaObject);
     void deserializeArray(const QJsonArray& array,
                           const QMetaProperty& metaProp,
                           void* dest);
@@ -165,8 +168,9 @@ protected:
                             const QMetaType& metaType,
                             bool isGadget,
                             QObject* parent);
-
-
+    QVariant destringify(const QString& value,
+                         const QMetaProperty& metaProp,
+                         const QMetaObject* metaObject);
 
 protected:
     void writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget);
@@ -180,6 +184,7 @@ protected:
 
 private:
     QRegularExpression m_arrayTypeRegex;
+    QHash<QString, QSharedPointer<LStringifier>> m_stringifiers;
 };
 
 class LCArrayHolder : public QObject
@@ -188,6 +193,24 @@ class LCArrayHolder : public QObject
 public:
     LCArrayHolder(QObject* parent = nullptr) : QObject(parent) {}
 };
+
+inline LStringifier* find_stringifier(const QMetaObject* metaObject,
+                                      const char* propName,
+                                      const QHash<QString, QSharedPointer<LStringifier>>& stringifiers)
+{
+    if (!metaObject)
+        return nullptr;
+
+    const int classInfoIndex = metaObject->indexOfClassInfo(propName);
+    if (classInfoIndex < 0)
+        return nullptr;
+
+    const QString stringifierName = QString(metaObject->classInfo(classInfoIndex).value());
+    if (!stringifiers.contains(stringifierName))
+        return nullptr;
+
+    return stringifiers.value(stringifierName).data();
+}
 
 template<class T>
 QVariant deserialize_array(const QJsonArray& array, std::function<T(const QJsonValue& jsonValue)> convert)
@@ -203,9 +226,9 @@ QVariant deserialize_array(const QJsonArray& array, std::function<T(const QJsonV
 }
 
 template<class T>
-LDeserializer<T>::LDeserializer() :
+LDeserializer<T>::LDeserializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers) :
     m_arrayTypeRegex(QStringLiteral("^(QList)<([^\\*]+(\\*){0,1})>$"))
-{}
+  , m_stringifiers(stringifiers) {}
 
 template<class T>
 T* LDeserializer<T>::deserialize(const QJsonObject& json)
@@ -270,7 +293,7 @@ void LDeserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMeta
         const QString& key = it.key();
         for (int i = 0; i < metaObject->propertyCount(); i++)
             if (metaObject->property(i).name() == key) {
-                deserializeValue(it.value(), metaObject->property(i), dest, isGadget);
+                deserializeValue(it.value(), metaObject->property(i), dest, isGadget, metaObject);
                 break;
             }
         ++it;
@@ -371,7 +394,23 @@ void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTy
 }
 
 template<class T>
-void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProperty& metaProp, void* dest, bool isGadget)
+QVariant LDeserializer<T>::destringify(const QString& value,
+                                       const QMetaProperty& metaProp,
+                                       const QMetaObject* metaObject)
+{
+    LStringifier* strigifier = find_stringifier(metaObject, metaProp.name(), m_stringifiers);
+    if (!strigifier)
+        return QVariant();
+
+    return strigifier->destringify(value);
+}
+
+template<class T>
+void LDeserializer<T>::deserializeValue(const QJsonValue& value,
+                                        const QMetaProperty& metaProp,
+                                        void* dest,
+                                        bool isGadget,
+                                        const QMetaObject* metaObject)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     int typeId = metaProp.metaType().id();
@@ -407,9 +446,14 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value, const QMetaProp
     case QJsonValue::Double:
         writeProp(metaProp, dest, value.toDouble(), isGadget);
         break;
-    case QJsonValue::String:
-        writeProp(metaProp, dest, value.toString(), isGadget);
+    case QJsonValue::String: {
+        const QVariant destringified = destringify(value.toString(), metaProp, metaObject);
+        if (!destringified.isNull())
+            writeProp(metaProp, dest, destringified, isGadget);
+        else
+            writeProp(metaProp, dest, value.toString(), isGadget);
         break;
+    }
     case QJsonValue::Array:
         deserializeArray(value.toArray(), metaProp, dest);
         break;

@@ -143,6 +143,9 @@ QJsonValue LSerializer::serializeValue(const char* propName, const QVariant& val
             }
         }
     }
+    LStringifier* stringifier = find_stringifier(metaObject, propName, m_stringifiers);
+    if (stringifier)
+        return stringifier->stringify(value);
     if (value.canConvert<QVariantList>())
         return serializeArray(value.value<QSequentialIterable>(), metaObject);
     if (value.canConvert<QVariantHash>())
