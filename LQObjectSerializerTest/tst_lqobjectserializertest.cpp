@@ -657,6 +657,9 @@ public:
 L_BEGIN_CLASS(CustomSerializationChild)
 Q_CLASSINFO("myPointF", "pointxy")
 L_RW_PROP_REF_AS(QPointF, myPointF, QPointF(2.2, 3.3))
+public:
+CustomSerializationChild(const CustomSerializationChild& other) :
+        QObject(other.parent()), m_myPointF(other.m_myPointF) {}
 L_END_CLASS
 
 L_BEGIN_CLASS(CustomSerialization)
@@ -714,6 +717,8 @@ void LQObjectSerializerTest::test_case14()
     QCOMPARE(array[0].toObject()["myPoint"].toString(), QSL("10,11"));
     QCOMPARE(array[1].toObject()["myPoint"].toString(), QSL("20,21"));
     QCOMPARE(array[1].toObject()["customStruct"].toString(), QSL("Mario,Rossi"));
+
+    qDeleteAll(list);
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)
