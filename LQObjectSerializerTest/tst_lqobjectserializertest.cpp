@@ -669,6 +669,9 @@ L_RW_PROP_AS(CustomSerializationChild*, myChild, new CustomSerializationChild(th
 L_RW_PROP_REF_AS(MyCustomStruct, customStruct)
 L_END_CLASS
 
+Q_DECLARE_METATYPE(CustomSerializationChild)
+Q_DECLARE_METATYPE(MyCustomStruct)
+
 void LQObjectSerializerTest::test_case14()
 {
     MyCustomStruct cstruct;
