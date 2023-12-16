@@ -30,10 +30,12 @@
 
 Q_LOGGING_CATEGORY(lserializer, "lserializer")
 
-LSerializer::LSerializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers) :
+namespace lqo {
+
+Serializer::Serializer(const QHash<QString, QSharedPointer<Stringifier>>& stringifiers) :
     m_stringifiers(stringifiers) {}
 
-QJsonValue LSerializer::serializeObject(const void* object, const QMetaObject* metaObj)
+QJsonValue Serializer::serializeObject(const void* object, const QMetaObject* metaObj)
 {
     QJsonObject json;
     bool isGadget = !metaObj->inherits(&QObject::staticMetaObject);
@@ -57,7 +59,7 @@ QJsonValue LSerializer::serializeObject(const void* object, const QMetaObject* m
     return json;
 }
 
-QJsonArray LSerializer::serializeArray(const QSequentialIterable& it, const QMetaObject* metaObject)
+QJsonArray Serializer::serializeArray(const QSequentialIterable& it, const QMetaObject* metaObject)
 {
     QJsonArray ret;
     for (const QVariant& variant : it)
@@ -65,7 +67,7 @@ QJsonArray LSerializer::serializeArray(const QSequentialIterable& it, const QMet
     return ret;
 }
 
-QJsonValue LSerializer::serializeValue(const char* propName, const QVariant& value, const QMetaObject* metaObject)
+QJsonValue Serializer::serializeValue(const char* propName, const QVariant& value, const QMetaObject* metaObject)
 {
     if (value.isNull())
         return QJsonValue::Undefined;
@@ -143,7 +145,7 @@ QJsonValue LSerializer::serializeValue(const char* propName, const QVariant& val
             }
         }
     }
-    LStringifier* stringifier = find_stringifier(metaObject, propName, m_stringifiers);
+    Stringifier* stringifier = find_stringifier(metaObject, propName, m_stringifiers);
     if (stringifier)
         return stringifier->stringify(value);
     if (value.canConvert<QVariantList>())
@@ -158,3 +160,5 @@ QJsonValue LSerializer::serializeValue(const char* propName, const QVariant& val
     qCDebug(lserializer) << "Unable to serialize type:" << metaType.name();
     return QJsonValue();
 }
+
+} // namespace lqo

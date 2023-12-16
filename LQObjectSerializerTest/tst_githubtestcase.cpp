@@ -79,7 +79,7 @@ void LGithubTestCase::test_case1()
     QVERIFY(!body.isEmpty());
 
     QJsonArray jsonArray = QJsonDocument::fromJson(body.toUtf8()).array();
-    LDeserializer<LGHRepo> deserializer;
+    lqo::Deserializer<LGHRepo> deserializer;
     QList<LGHRepo*> repos = deserializer.deserializeObjectArray(jsonArray);
     QVERIFY(repos.size() > 0);
     QVERIFY(std::find_if(repos.begin(), repos.end(), [] (LGHRepo* repo) -> bool {

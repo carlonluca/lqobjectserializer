@@ -314,12 +314,12 @@ void LQObjectSerializerTest::test_objectName()
     {
         QObject qobj;
         qobj.setObjectName("HELLO");
-        QCOMPARE(LSerializer().serialize(&qobj)["objectName"].toString(), "HELLO");
+        QCOMPARE(lqo::Serializer().serialize(&qobj)["objectName"].toString(), "HELLO");
     }
 
     {
         QObject qobj;
-        QVERIFY(!LSerializer().serialize(&qobj).contains("objectName"));
+        QVERIFY(!lqo::Serializer().serialize(&qobj).contains("objectName"));
     }
 }
 
@@ -356,10 +356,10 @@ void LQObjectSerializerTest::test_case1()
     QVERIFY(QString().isNull());
     i->setLabel(QString());
 
-    LSerializer serializer;
+    lqo::Serializer serializer;
     QJsonObject json = serializer.serialize<SomeQObject>(&someObj);
 
-    LDeserializer<SomeQObject> deserializer;
+    lqo::Deserializer<SomeQObject> deserializer;
     QScopedPointer<SomeQObject> res(deserializer.deserialize(json));
 
     QCOMPARE(res->someInt(), 7);
@@ -391,7 +391,7 @@ void LQObjectSerializerTest::test_case2()
     QJsonObject json = doc.object();
     QVERIFY(!json.isEmpty());
 
-    LDeserializer<GlossaryRoot> deserializer;
+    lqo::Deserializer<GlossaryRoot> deserializer;
     QScopedPointer<GlossaryRoot> g(deserializer.deserialize(json));
     QVERIFY(g->glossary() != nullptr);
     QVERIFY(g->glossary()->GlossDiv() != nullptr);
@@ -419,7 +419,7 @@ void LQObjectSerializerTest::test_case3()
 
     QByteArray jsonString = jsonFile.readAll();
 
-    LDeserializer<MenuRoot> deserializer;
+    lqo::Deserializer<MenuRoot> deserializer;
     QScopedPointer<MenuRoot> g(deserializer.deserialize(jsonString));
     QVERIFY(g->menu() != nullptr);
     QCOMPARE(g->menu()->items().size(), 22);
@@ -430,7 +430,7 @@ void LQObjectSerializerTest::test_case3()
     QCOMPARE(g->menu()->items().at(2), nullptr);
     QVERIFY(g->menu()->items().at(0)->label().isNull());
 
-    LSerializer serializer;
+    lqo::Serializer serializer;
     QJsonObject obj = serializer.serialize<MenuRoot>(g.data());
     QJsonDocument doc = QJsonDocument::fromJson(jsonString);
     QJsonObject json = doc.object();
@@ -444,7 +444,7 @@ void LQObjectSerializerTest::test_case4()
 
     QByteArray jsonString = jsonFile.readAll();
 
-    LDeserializer<FPersonInfo> deserializer;
+    lqo::Deserializer<FPersonInfo> deserializer;
     QScopedPointer<FPersonInfo> g(deserializer.deserialize(jsonString));
     QVERIFY(g);
     QCOMPARE(g->age(), 33);
@@ -472,7 +472,7 @@ void LQObjectSerializerTest::test_case5()
     monitor.setSize(&size);
     monitor.setResolution(&res);
 
-    QJsonObject json = LSerializer().serialize<Monitor>(&monitor);
+    QJsonObject json = lqo::Serializer().serialize<Monitor>(&monitor);
     QVERIFY(json.contains(QSL("manufacturer")));
     QVERIFY(json.contains(QSL("model")));
     QVERIFY(json.contains(QSL("resolution")));
@@ -491,7 +491,7 @@ void LQObjectSerializerTest::test_case5()
 
     QByteArray jsonString = jsonFile.readAll();
 
-    LDeserializer<Monitor> deserializer;
+    lqo::Deserializer<Monitor> deserializer;
     QScopedPointer<Monitor> m(deserializer.deserialize(jsonString));
 
     QVERIFY(m);
@@ -511,7 +511,7 @@ void LQObjectSerializerTest::test_case6()
 
     QByteArray jsonString = jsonFile.readAll();
 
-    LDeserializer<KodiResponse> deserializer;
+    lqo::Deserializer<KodiResponse> deserializer;
     QScopedPointer<KodiResponse> m(deserializer.deserialize(jsonString));
 
     QVERIFY(m);
@@ -526,7 +526,7 @@ void LQObjectSerializerTest::test_case7()
 
     QByteArray jsonString = jsonFile.readAll();
 
-    LDeserializer<KodiResponseVariant> deserializer;
+    lqo::Deserializer<KodiResponseVariant> deserializer;
     QScopedPointer<KodiResponseVariant> m(deserializer.deserialize(jsonString));
 
     QVERIFY(m);
@@ -547,7 +547,7 @@ void LQObjectSerializerTest::test_case8()
         { QSL("numbers"), QVariantList { 1, 2, 3 } }
     });
 
-    LSerializer serializer;
+    lqo::Serializer serializer;
     QJsonObject json = serializer.serialize<KodiResponseVariant>(&response);
     QCOMPARE(json["result"].toObject()["author"].toString(), QSL("Luca Carlon"));
     QCOMPARE(json["result"].toObject()["dates"].toObject()["today"].toString(), QSL("2023.12.06"));
@@ -558,7 +558,7 @@ void LQObjectSerializerTest::test_case9()
 {
     CustomTypes customTypes;
 
-    LSerializer serializer;
+    lqo::Serializer serializer;
     QJsonObject json = serializer.serialize<CustomTypes>(&customTypes);
 
     QCOMPARE(json["myRect"].toString(), QSL("0.1,0.2,0.3,0.4"));
@@ -570,7 +570,7 @@ void LQObjectSerializerTest::test_case10()
     hashTest.set_test1({ { QSL("test1"), 1 }, { QSL("test2"), 2 } });
     hashTest.set_test2({ { QSL("test1"), 1 }, { QSL("test2"), 2 } });
 
-    LSerializer serializer;
+    lqo::Serializer serializer;
     QJsonObject json = serializer.serialize<HashTest>(&hashTest);
 
     QCOMPARE(json["test1"].toObject()["test1"].toInt(), 1);
@@ -590,7 +590,7 @@ void LQObjectSerializerTest::test_case11()
     hashTest.set_test3({ { QSL("test1"), qo1.data() }, { QSL("test2"), qo2.data() } });
     hashTest.set_test4({ qo1.data(), qo2.data() });
 
-    LSerializer serializer;
+    lqo::Serializer serializer;
     QJsonObject json = serializer.serialize<HashTest>(&hashTest);
 
     QCOMPARE(json["test4"].toArray()[0].toObject()["objectName"], "Name1");
@@ -603,13 +603,13 @@ void LQObjectSerializerTest::test_case12()
     for (int i = 0; i < 100; i++)
         list.append(i);
 
-    QJsonArray json = LSerializer().serialize(list);
+    QJsonArray json = lqo::Serializer().serialize(list);
 
     QCOMPARE(json.size(), list.size());
     for (int i = 0; i < 100; i++)
         QCOMPARE(json[i].toInt(), i);
 
-    QList<double> _list = LDeserializer<int>().deserializeNumberArray(json);
+    QList<double> _list = lqo::Deserializer<int>().deserializeNumberArray(json);
 
     for (int i = 0; i < _list.size(); i++)
         QVERIFY(_list[i] - i < 1E-6);
@@ -621,7 +621,7 @@ void LQObjectSerializerTest::test_case13()
     t.setHeader(QSL("header"));
     t.set_title(QSL("title"));
 
-    QJsonObject json = LSerializer().serialize(&t);
+    QJsonObject json = lqo::Serializer().serialize(&t);
 
     QCOMPARE(t.header(), json["header"].toString());
     QCOMPARE(t.title(), json["title"].toString());
@@ -636,7 +636,7 @@ struct MyCustomStruct
     }
 };
 
-class MyCustomStructStringifier : public LStringifier
+class MyCustomStructStringifier : public lqo::Stringifier
 {
 public:
     QString stringify(const QVariant& v) override {
@@ -687,18 +687,18 @@ void LQObjectSerializerTest::test_case14()
     cs.set_customStruct(cstruct);
     cs.myChild()->set_myPointF(QPointF(2.2, 3.3));
 
-    const QHash<QString, QSharedPointer<LStringifier>> stringifiers = {
-        { QSL("rectxywh"), QSharedPointer<LStringifier>(new LRectStringifier) },
-        { QSL("pointxy"), QSharedPointer<LStringifier>(new LPointStringifier) },
-        { QSL("cs"), QSharedPointer<LStringifier>(new MyCustomStructStringifier) }
+    const QHash<QString, QSharedPointer<lqo::Stringifier>> stringifiers = {
+        { QSL("rectxywh"), QSharedPointer<lqo::Stringifier>(new lqo::RectStringifier) },
+        { QSL("pointxy"), QSharedPointer<lqo::Stringifier>(new lqo::PointStringifier) },
+        { QSL("cs"), QSharedPointer<lqo::Stringifier>(new MyCustomStructStringifier) }
     };
-    QJsonObject json = LSerializer(stringifiers).serialize(&cs);
+    QJsonObject json = lqo::Serializer(stringifiers).serialize(&cs);
     QCOMPARE(json["myRect"].toString(), QSL("1,2,3,4"));
     QCOMPARE(json["myPoint"].toString(), QSL("1,2"));
     QCOMPARE(json["customStruct"].toString(), QSL("Luca,Carlon"));
     QCOMPARE(json["myChild"].toObject()["myPointF"], QSL("2.2,3.3"));
 
-    LDeserializer<CustomSerialization> des(stringifiers);
+    lqo::Deserializer<CustomSerialization> des(stringifiers);
     QScopedPointer<CustomSerialization> desCs(des.deserialize(json));
 
     QCOMPARE(desCs->myRect(), QRect(1, 2, 3, 4));
@@ -713,7 +713,7 @@ void LQObjectSerializerTest::test_case14()
     list[1]->set_myPoint(QPoint(20, 21));
     list[1]->customStruct().name = "Mario";
     list[1]->customStruct().surname = "Rossi";
-    QJsonArray array = LSerializer(stringifiers).serialize(list, &CustomSerialization::staticMetaObject);
+    QJsonArray array = lqo::Serializer(stringifiers).serialize(list, &CustomSerialization::staticMetaObject);
     QCOMPARE(array[0].toObject()["myPoint"].toString(), QSL("10,11"));
     QCOMPARE(array[1].toObject()["myPoint"].toString(), QSL("20,21"));
     QCOMPARE(array[1].toObject()["customStruct"].toString(), QSL("Mario,Rossi"));

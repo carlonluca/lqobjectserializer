@@ -22,8 +22,8 @@
  * SOFTWARE.
  **/
 
-#ifndef LCSERIALIZER_H
-#define LCSERIALIZER_H
+#ifndef LSERIALIZER_H
+#define LSERIALIZER_H
 
 #include <QByteArray>
 #include <QVariant>
@@ -52,14 +52,24 @@ Q_DECLARE_LOGGING_CATEGORY(lserializer)
 
 class QObject;
 
-class LStringifier
+namespace lqo {
+
+///
+/// \brief The LStringifier class is an interface for objects used to automatically
+/// stringify or destringify objects when serializing/deserializing.
+///
+class Stringifier
 {
 public:
     virtual QString stringify(const QVariant&) { return QString(); }
     virtual QVariant destringify(const QString&) { return QVariant(); }
 };
 
-class LRectStringifier : public LStringifier
+///
+/// \brief The LRectStringifier class is a stringifier for the QRectF and QRect types. It
+/// serializes QRectF to x,y,w,h by using the dot as the decimal separator.
+///
+class RectStringifier : public Stringifier
 {
 public:
     QString stringify(const QVariant& v) override {
@@ -74,7 +84,7 @@ public:
     }
 };
 
-class LPointStringifier : public LStringifier
+class PointStringifier : public Stringifier
 {
 public:
     QString stringify(const QVariant& v) override {
@@ -89,10 +99,10 @@ public:
     }
 };
 
-class LSerializer
+class Serializer
 {
 public:
-    LSerializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers = QHash<QString, QSharedPointer<LStringifier>>());
+    Serializer(const QHash<QString, QSharedPointer<Stringifier>>& stringifiers = QHash<QString, QSharedPointer<Stringifier>>());
     template<class T> QJsonObject serialize(T* object);
     template<class T> QJsonArray serialize(const QList<T>& array, const QMetaObject* metaObject = nullptr);
 
@@ -104,11 +114,11 @@ public:
     QJsonValue serializeValue(const char* propName, const QVariant& value, const QMetaObject* metaObject);
 
 private:
-    QHash<QString, QSharedPointer<LStringifier>> m_stringifiers;
+    QHash<QString, QSharedPointer<Stringifier>> m_stringifiers;
 };
 
 template<typename T>
-QJsonValue LSerializer::serializeDictionary(const T& variant)
+QJsonValue Serializer::serializeDictionary(const T& variant)
 {
     QJsonObject ret;
     for (auto it = variant.constBegin(), end = variant.constEnd(); it != end; it++) {
@@ -122,23 +132,23 @@ QJsonValue LSerializer::serializeDictionary(const T& variant)
 }
 
 template<class T>
-QJsonObject LSerializer::serialize(T* object)
+QJsonObject Serializer::serialize(T* object)
 {
     return !object ? QJsonObject() : serializeObject(object, &T::staticMetaObject).toObject();
 }
 
 template<class T>
-QJsonArray LSerializer::serialize(const QList<T>& array, const QMetaObject* metaObject)
+QJsonArray Serializer::serialize(const QList<T>& array, const QMetaObject* metaObject)
 {
     QVariant list = QVariant::fromValue(array);
     return serializeArray(list.value<QSequentialIterable>(), metaObject);
 }
 
 template<class T>
-class LDeserializer
+class Deserializer
 {
 public:
-    LDeserializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers = QHash<QString, QSharedPointer<LStringifier>>());
+    Deserializer(const QHash<QString, QSharedPointer<Stringifier>>& stringifiers = QHash<QString, QSharedPointer<Stringifier>>());
     T* deserialize(const QJsonObject& json);
     T* deserialize(const QString& jsonString);
     QList<QString> deserializeStringArray(const QJsonArray& array);
@@ -184,7 +194,7 @@ protected:
 
 private:
     QRegularExpression m_arrayTypeRegex;
-    QHash<QString, QSharedPointer<LStringifier>> m_stringifiers;
+    QHash<QString, QSharedPointer<Stringifier>> m_stringifiers;
 };
 
 class LCArrayHolder : public QObject
@@ -194,9 +204,9 @@ public:
     LCArrayHolder(QObject* parent = nullptr) : QObject(parent) {}
 };
 
-inline LStringifier* find_stringifier(const QMetaObject* metaObject,
-                                      const char* propName,
-                                      const QHash<QString, QSharedPointer<LStringifier>>& stringifiers)
+inline Stringifier* find_stringifier(const QMetaObject* metaObject,
+                                     const char* propName,
+                                     const QHash<QString, QSharedPointer<Stringifier>>& stringifiers)
 {
     if (!metaObject)
         return nullptr;
@@ -226,12 +236,12 @@ QVariant deserialize_array(const QJsonArray& array, std::function<T(const QJsonV
 }
 
 template<class T>
-LDeserializer<T>::LDeserializer(const QHash<QString, QSharedPointer<LStringifier>>& stringifiers) :
+Deserializer<T>::Deserializer(const QHash<QString, QSharedPointer<Stringifier>>& stringifiers) :
     m_arrayTypeRegex(QStringLiteral("^(QList)<([^\\*]+(\\*){0,1})>$"))
   , m_stringifiers(stringifiers) {}
 
 template<class T>
-T* LDeserializer<T>::deserialize(const QJsonObject& json)
+T* Deserializer<T>::deserialize(const QJsonObject& json)
 {
     T* t = new T;
     deserializeJson(json, t, &T::staticMetaObject);
@@ -239,7 +249,7 @@ T* LDeserializer<T>::deserialize(const QJsonObject& json)
 }
 
 template<class T>
-T* LDeserializer<T>::deserialize(const QString& jsonString)
+T* Deserializer<T>::deserialize(const QString& jsonString)
 {
     QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8());
     QJsonObject json = doc.object();
@@ -247,7 +257,7 @@ T* LDeserializer<T>::deserialize(const QString& jsonString)
 }
 
 template<class T>
-QList<QString> LDeserializer<T>::deserializeStringArray(const QJsonArray& array)
+QList<QString> Deserializer<T>::deserializeStringArray(const QJsonArray& array)
 {
     return deserialize_array<QString>(array, [] (const QJsonValue& jsonValue) -> QString {
         return jsonValue.toString();
@@ -255,7 +265,7 @@ QList<QString> LDeserializer<T>::deserializeStringArray(const QJsonArray& array)
 }
 
 template<class T>
-QList<double> LDeserializer<T>::deserializeNumberArray(const QJsonArray& array)
+QList<double> Deserializer<T>::deserializeNumberArray(const QJsonArray& array)
 {
     QVariant v = deserialize_array<double>(array, [] (const QJsonValue& jsonValue) -> double {
         return jsonValue.toDouble();
@@ -264,7 +274,7 @@ QList<double> LDeserializer<T>::deserializeNumberArray(const QJsonArray& array)
 }
 
 template<class T>
-QList<bool> LDeserializer<T>::deserializeBoolArray(const QJsonArray &array)
+QList<bool> Deserializer<T>::deserializeBoolArray(const QJsonArray &array)
 {
     QVariant v = deserialize_array<bool>(array, [] (const QJsonValue& jsonValue) -> bool {
         return jsonValue.toBool();
@@ -273,7 +283,7 @@ QList<bool> LDeserializer<T>::deserializeBoolArray(const QJsonArray &array)
 }
 
 template<class T>
-QList<T*> LDeserializer<T>::deserializeObjectArray(const QJsonArray& array)
+QList<T*> Deserializer<T>::deserializeObjectArray(const QJsonArray& array)
 {
     QVariant v = deserialize_array<T*>(array, [this] (const QJsonValue& jsonValue) -> T* {
         // TODO: Mem management.
@@ -285,7 +295,7 @@ QList<T*> LDeserializer<T>::deserializeObjectArray(const QJsonArray& array)
 }
 
 template<class T>
-void LDeserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMetaObject* metaObject)
+void Deserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMetaObject* metaObject)
 {
     bool isGadget = !metaObject->inherits(&QObject::staticMetaObject);
     QJsonObject::const_iterator it = json.constBegin();
@@ -301,7 +311,7 @@ void LDeserializer<T>::deserializeJson(QJsonObject json, void* dest, const QMeta
 }
 
 template<class T>
-void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, void* dest)
+void Deserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProperty& metaProp, void* dest)
 {
 #ifdef DEBUG_LQOBJECTSERIALIZER
     qDebug() << "Deserialize array:" << metaProp.typeName() << metaProp.name();
@@ -363,7 +373,7 @@ void LDeserializer<T>::deserializeArray(const QJsonArray& array, const QMetaProp
 }
 
 template<class T>
-void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaType& metaType, bool isGadget, QObject* parent)
+void* Deserializer<T>::instantiateObject(const QJsonValue& value, const QMetaType& metaType, bool isGadget, QObject* parent)
 {
     const QMetaObject* metaObject = metaType.metaObject();
     if (metaType.id() == QMetaType::UnknownType) {
@@ -394,11 +404,11 @@ void* LDeserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTy
 }
 
 template<class T>
-QVariant LDeserializer<T>::destringify(const QString& value,
+QVariant Deserializer<T>::destringify(const QString& value,
                                        const QMetaProperty& metaProp,
                                        const QMetaObject* metaObject)
 {
-    LStringifier* strigifier = find_stringifier(metaObject, metaProp.name(), m_stringifiers);
+    Stringifier* strigifier = find_stringifier(metaObject, metaProp.name(), m_stringifiers);
     if (!strigifier)
         return QVariant();
 
@@ -406,7 +416,7 @@ QVariant LDeserializer<T>::destringify(const QString& value,
 }
 
 template<class T>
-void LDeserializer<T>::deserializeValue(const QJsonValue& value,
+void Deserializer<T>::deserializeValue(const QJsonValue& value,
                                         const QMetaProperty& metaProp,
                                         void* dest,
                                         bool isGadget,
@@ -481,7 +491,7 @@ void LDeserializer<T>::deserializeValue(const QJsonValue& value,
 }
 
 template<class T>
-void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QString& propName, const QString& type, QObject* dest)
+void Deserializer<T>::deserializeObjectArray(const QJsonArray& array, const QString& propName, const QString& type, QObject* dest)
 {
     QMetaMethod addMethod;
     for (int i = 0; i < dest->metaObject()->methodCount(); i++)
@@ -520,7 +530,7 @@ void LDeserializer<T>::deserializeObjectArray(const QJsonArray& array, const QSt
 }
 
 template<class T>
-void LDeserializer<T>::writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget)
+void Deserializer<T>::writeProp(const QMetaProperty& metaProp, void* dest, const QVariant& value, bool isGadget)
 {
     if (!metaProp.isWritable()) {
         qCWarning(lserializer) << "Prop"
@@ -540,4 +550,6 @@ void LDeserializer<T>::writeProp(const QMetaProperty& metaProp, void* dest, cons
                                << "to" << metaProp.name();
 }
 
-#endif // LCSERIALIZER_H
+} // namespace lqo
+
+#endif // LSERIALIZER_H
