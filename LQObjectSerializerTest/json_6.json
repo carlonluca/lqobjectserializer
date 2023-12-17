@@ -1,0 +1,26 @@
+{
+    "string": "Some string",
+    "boolean": true,
+    "uintType": 15,
+    "qlonglongType": -16,
+    "qulonglongType": 16,
+    "doubleType": 15.1,
+    "floatType": 15.2,
+    "qlonglongList": [ -1, 0, 1 ],
+    "v": true,
+    "vmap": {
+        "a": "b",
+        "c": "d"
+    },
+    "vhash": {
+        "e": "f",
+        "g": "h"
+    },
+    "vlist": [{
+            "a": "b",
+            "c": "d"
+        }, {
+            "e": "f",
+            "g": "h"
+    }]
+}

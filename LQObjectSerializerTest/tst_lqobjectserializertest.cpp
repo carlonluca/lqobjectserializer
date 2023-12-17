@@ -27,6 +27,7 @@
 
 #include "../LQObjectSerializer/lserializer.h"
 #include "../deps/lqtutils/lqtutils_string.h"
+#include "../deps/lqtutils/lqtutils_math.h"
 
 L_BEGIN_CLASS(SomeQObjectChild2)
 L_RW_PROP(QString, someString, setSomeString, QString())
@@ -229,6 +230,7 @@ private slots:
     void test_case12();
     void test_case13();
     void test_case14();
+    void test_case15();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -719,6 +721,67 @@ void LQObjectSerializerTest::test_case14()
     QCOMPARE(array[1].toObject()["customStruct"].toString(), QSL("Mario,Rossi"));
 
     qDeleteAll(list);
+}
+
+L_BEGIN_CLASS(TestDesTypes)
+L_RW_PROP_AS(QString, string)
+L_RW_PROP_AS(bool, boolean, false)
+L_RW_PROP_AS(uint, uintType, 0)
+L_RW_PROP_AS(qlonglong, qlonglongType, 0)
+L_RW_PROP_AS(qulonglong, qulonglongType, 0)
+L_RW_PROP_AS(double, doubleType, 0)
+L_RW_PROP_AS(float, floatType, 0)
+L_RW_PROP_AS(QList<int>, qlonglongList)
+L_RW_PROP_AS(QVariant, v)
+L_RW_PROP_AS(QVariantMap, vmap)
+L_RW_PROP_AS(QVariantHash, vhash)
+L_RW_PROP_AS(QVariantList, vlist)
+L_END_CLASS
+
+void LQObjectSerializerTest::test_case15()
+{
+    QFile jsonFile(":/json_6.json");
+    QVERIFY(jsonFile.open(QIODevice::ReadOnly));
+
+    const QByteArray jsonString = jsonFile.readAll();
+
+    lqo::Deserializer<TestDesTypes> deserializer;
+    QScopedPointer<TestDesTypes> m(deserializer.deserialize(jsonString));
+
+    const QList<int> l {
+        -1, 0, 1
+    };
+    const bool t1 = lqt::approx_equal(m->doubleType(), 15.1, 1E-6);
+    const bool t2 = lqt::approx_equal((double)m->floatType(), 15.2, 1E-6);
+    const QVariant v(true);
+    const QVariantMap vmap {
+        { QSL("a"), QSL("b") },
+        { QSL("c"), QSL("d") }
+    };
+    const QVariantHash vhash {
+        { QSL("e"), QSL("f") },
+        { QSL("g"), QSL("h") }
+    };
+    const QVariantList vlist {
+        vmap,
+        QVariantMap {
+            { QSL("e"), QSL("f") },
+            { QSL("g"), QSL("h") }
+        }
+    };
+
+    QCOMPARE(m->string(), QSL("Some string"));
+    QCOMPARE(m->boolean(), true);
+    QCOMPARE(m->uintType(), 15);
+    QCOMPARE(m->qlonglongType(), -16);
+    QCOMPARE(m->qulonglongType(), 16);
+    QVERIFY(t1);
+    QVERIFY(t2);
+    QVERIFY(m->qlonglongList() == l);
+    QCOMPARE(m->v(), v);
+    QCOMPARE(m->vmap(), vmap);
+    QCOMPARE(m->vhash(), vhash);
+    QCOMPARE(m->vlist(), vlist);
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)

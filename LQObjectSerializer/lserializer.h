@@ -84,6 +84,10 @@ public:
     }
 };
 
+///
+/// \brief The PointStringifier class is a stringifier for the QPointF and QPoint types. It
+/// serializes QPointF to x,y by using the dot as the decimal separator.
+///
 class PointStringifier : public Stringifier
 {
 public:
@@ -99,6 +103,9 @@ public:
     }
 };
 
+///
+/// \brief The Serializer class can be used to serialize a QObject or a gadget.
+///
 class Serializer
 {
 public:
@@ -144,6 +151,9 @@ QJsonArray Serializer::serialize(const QList<T>& array, const QMetaObject* metaO
     return serializeArray(list.value<QSequentialIterable>(), metaObject);
 }
 
+///
+/// \brief The Serializer class can be used to deserialize a JSON to a QObject or a gadget.
+///
 template<class T>
 class Deserializer
 {
@@ -195,13 +205,6 @@ protected:
 private:
     QRegularExpression m_arrayTypeRegex;
     QHash<QString, QSharedPointer<Stringifier>> m_stringifiers;
-};
-
-class LCArrayHolder : public QObject
-{
-    Q_OBJECT
-public:
-    LCArrayHolder(QObject* parent = nullptr) : QObject(parent) {}
 };
 
 inline Stringifier* find_stringifier(const QMetaObject* metaObject,
