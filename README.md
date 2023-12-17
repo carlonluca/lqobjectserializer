@@ -139,6 +139,7 @@ public:
     }
 };
 ```
+Stringifiers must be passed to the `lqo::Serializer` instance.
 ## How to inlcude in your project
 
 Everything is included in just two files, so you can include those alone. Otherwise, you can include through cmake:
