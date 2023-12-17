@@ -764,10 +764,7 @@ void LQObjectSerializerTest::test_case15()
     };
     const QVariantList vlist {
         vmap,
-        QVariantMap {
-            { QSL("e"), QSL("f") },
-            { QSL("g"), QSL("h") }
-        }
+        QVariant(vhash).toMap()
     };
 
     QCOMPARE(m->string(), QSL("Some string"));
