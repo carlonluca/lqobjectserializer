@@ -61,6 +61,7 @@ namespace lqo {
 class Stringifier
 {
 public:
+    virtual ~Stringifier() {}
     virtual QString stringify(const QVariant&) { return QString(); }
     virtual QVariant destringify(const QString&) { return QVariant(); }
 };
@@ -102,6 +103,24 @@ public:
     QVariant destringify(const QString& s) override {
         QPointF p = lqt::string_to_point(s);
         return QVariant::fromValue(p);
+    }
+};
+
+///
+/// \brief The DateTimeStringifier class is a stringifier for the QDateTime type. It
+/// stringifies to ISO 8601, which is recommended and widely used in JSON.
+///
+class DateTimeStringifier : public Stringifier
+{
+public:
+    QString stringify(const QVariant& v) override {
+        if (v.isNull() || !v.canConvert<QDateTime>())
+            return QString();
+        return v.value<QDateTime>().toString(Qt::ISODateWithMs);
+    }
+
+    QVariant destringify(const QString& s) override {
+        return QDateTime::fromString(s, Qt::ISODateWithMs);
     }
 };
 
