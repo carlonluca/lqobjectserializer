@@ -28,6 +28,7 @@
 #include "../LQObjectSerializer/lserializer.h"
 #include "../deps/lqtutils/lqtutils_string.h"
 #include "../deps/lqtutils/lqtutils_math.h"
+#include "../deps/lqtutils/lqtutils_qsl.h"
 
 L_BEGIN_CLASS(SomeQObjectChild2)
 L_RW_PROP(QString, someString, setSomeString, QString())

@@ -26,7 +26,7 @@
 #include <QNetworkAccessManager>
 
 #include "../LQObjectSerializer/lserializer.h"
-#include "../deps/lqtutils/lqtutils_string.h"
+#include "../deps/lqtutils/lqtutils_qsl.h"
 
 L_BEGIN_GADGET(LGHOwner)
 L_RW_GPROP(QString, login, setLogin, "login")
