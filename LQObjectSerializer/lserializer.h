@@ -64,7 +64,6 @@ public:
     virtual QString stringify(const QVariant&) { return QString(); }
     virtual QVariant destringify(const QString&) { return QVariant(); }
 };
-typedef QHash<QString, QSharedPointer<Stringifier>> StringifiersMap;
 
 ///
 /// \brief The LRectStringifier class is a stringifier for the QRectF and QRect types. It
@@ -109,8 +108,12 @@ public:
 ///
 class Serializer
 {
+private:
+    typedef QHash<QString, QSharedPointer<Stringifier>> MemberStringifiersMap;
+    typedef QHash<QMetaType, QSharedPointer<Stringifier>> TypeStringifiersMap;
+
 public:
-    Serializer(const StringifiersMap& memberStringifiers = StringifiersMap());
+    Serializer(const MemberStringifiersMap& memberStringifiers = MemberStringifiersMap());
     template<class T> QJsonObject serialize(T* object);
     template<class T> QJsonArray serialize(const QList<T>& array, const QMetaObject* metaObject = nullptr);
 
@@ -122,7 +125,7 @@ public:
     QJsonValue serializeValue(const char* propName, const QVariant& value, const QMetaObject* metaObject);
 
 private:
-    StringifiersMap m_memberStringifiers;
+    MemberStringifiersMap m_memberStringifiers;
 };
 
 template<typename T>
