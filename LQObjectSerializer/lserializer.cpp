@@ -32,8 +32,8 @@ Q_LOGGING_CATEGORY(lserializer, "lserializer")
 
 namespace lqo {
 
-Serializer::Serializer(const QHash<QString, QSharedPointer<Stringifier>>& stringifiers) :
-    m_stringifiers(stringifiers) {}
+Serializer::Serializer(const QHash<QString, QSharedPointer<Stringifier>>& memberStringifiers) :
+    m_memberStringifiers(memberStringifiers) {}
 
 QJsonValue Serializer::serializeObject(const void* object, const QMetaObject* metaObj)
 {
@@ -138,14 +138,14 @@ QJsonValue Serializer::serializeValue(const char* propName, const QVariant& valu
         const int classInfoIndex = metaObject->indexOfClassInfo(propName);
         if (classInfoIndex >= 0) {
             const QString stringifierName = QString(metaObject->classInfo(classInfoIndex).value());
-            if (m_stringifiers.contains(stringifierName)) {
-                auto stringifier = m_stringifiers.value(stringifierName);
+            if (m_memberStringifiers.contains(stringifierName)) {
+                auto stringifier = m_memberStringifiers.value(stringifierName);
                 if (stringifier)
                     return stringifier->stringify(value);
             }
         }
     }
-    Stringifier* stringifier = find_stringifier(metaObject, propName, m_stringifiers);
+    Stringifier* stringifier = find_stringifier(metaObject, propName, m_memberStringifiers);
     if (stringifier)
         return stringifier->stringify(value);
     if (value.canConvert<QVariantList>())
