@@ -64,6 +64,8 @@ public:
     virtual QString stringify(const QVariant&) { return QString(); }
     virtual QVariant destringify(const QString&) { return QVariant(); }
 };
+typedef QHash<QString, QSharedPointer<Stringifier>> MemberStringifiersMap;
+typedef QHash<QMetaType, QSharedPointer<Stringifier>> TypeStringifiersMap;
 
 ///
 /// \brief The LRectStringifier class is a stringifier for the QRectF and QRect types. It
@@ -108,12 +110,9 @@ public:
 ///
 class Serializer
 {
-private:
-    typedef QHash<QString, QSharedPointer<Stringifier>> MemberStringifiersMap;
-    typedef QHash<QMetaType, QSharedPointer<Stringifier>> TypeStringifiersMap;
-
 public:
-    Serializer(const MemberStringifiersMap& memberStringifiers = MemberStringifiersMap());
+    Serializer(const MemberStringifiersMap& memberStringifiers = MemberStringifiersMap(),
+               const TypeStringifiersMap& typeStringifiers = TypeStringifiersMap());
     template<class T> QJsonObject serialize(T* object);
     template<class T> QJsonArray serialize(const QList<T>& array, const QMetaObject* metaObject = nullptr);
 
@@ -126,6 +125,7 @@ public:
 
 private:
     MemberStringifiersMap m_memberStringifiers;
+    TypeStringifiersMap m_typeStringifiers;
 };
 
 template<typename T>
@@ -162,7 +162,8 @@ template<class T>
 class Deserializer
 {
 public:
-    Deserializer(const QHash<QString, QSharedPointer<Stringifier>>& stringifiers = QHash<QString, QSharedPointer<Stringifier>>());
+    Deserializer(const MemberStringifiersMap& stringifiers = MemberStringifiersMap(),
+                 const TypeStringifiersMap& typeStringifiers = TypeStringifiersMap());
     T* deserialize(const QJsonObject& json);
     T* deserialize(const QString& jsonString);
     QList<QString> deserializeStringArray(const QJsonArray& array);
@@ -208,25 +209,30 @@ protected:
 
 private:
     QRegularExpression m_arrayTypeRegex;
-    QHash<QString, QSharedPointer<Stringifier>> m_stringifiers;
+    MemberStringifiersMap m_memberStringifiers;
+    TypeStringifiersMap m_typeStringifiers;
 };
 
 inline Stringifier* find_stringifier(const QMetaObject* metaObject,
                                      const char* propName,
-                                     const QHash<QString, QSharedPointer<Stringifier>>& stringifiers)
+                                     const QMetaType& metaType,
+                                     const MemberStringifiersMap& memberStringifiers,
+                                     const TypeStringifiersMap& typeStringifiers)
 {
     if (!metaObject)
         return nullptr;
 
     const int classInfoIndex = metaObject->indexOfClassInfo(propName);
-    if (classInfoIndex < 0)
-        return nullptr;
+    if (classInfoIndex >= 0) {
+        const QString stringifierName = QString(metaObject->classInfo(classInfoIndex).value());
+        if (memberStringifiers.contains(stringifierName))
+            return memberStringifiers.value(stringifierName).data();
+    }
 
-    const QString stringifierName = QString(metaObject->classInfo(classInfoIndex).value());
-    if (!stringifiers.contains(stringifierName))
-        return nullptr;
+    if (typeStringifiers.contains(metaType))
+        return typeStringifiers.value(metaType).data();
 
-    return stringifiers.value(stringifierName).data();
+    return nullptr;
 }
 
 template<class T>
@@ -243,9 +249,10 @@ QVariant deserialize_array(const QJsonArray& array, std::function<T(const QJsonV
 }
 
 template<class T>
-Deserializer<T>::Deserializer(const QHash<QString, QSharedPointer<Stringifier>>& stringifiers) :
+Deserializer<T>::Deserializer(const MemberStringifiersMap& memberStringifiers, const TypeStringifiersMap& typeStringifiers) :
     m_arrayTypeRegex(QStringLiteral("^(QList)<([^\\*]+(\\*){0,1})>$"))
-  , m_stringifiers(stringifiers) {}
+  , m_memberStringifiers(memberStringifiers)
+  , m_typeStringifiers(typeStringifiers) {}
 
 template<class T>
 T* Deserializer<T>::deserialize(const QJsonObject& json)
@@ -412,10 +419,14 @@ void* Deserializer<T>::instantiateObject(const QJsonValue& value, const QMetaTyp
 
 template<class T>
 QVariant Deserializer<T>::destringify(const QString& value,
-                                       const QMetaProperty& metaProp,
-                                       const QMetaObject* metaObject)
+                                      const QMetaProperty& metaProp,
+                                      const QMetaObject* metaObject)
 {
-    Stringifier* strigifier = find_stringifier(metaObject, metaProp.name(), m_stringifiers);
+    Stringifier* strigifier = find_stringifier(metaObject,
+                                               metaProp.name(),
+                                               metaProp.metaType(),
+                                               m_memberStringifiers,
+                                               m_typeStringifiers);
     if (!strigifier)
         return QVariant();
 

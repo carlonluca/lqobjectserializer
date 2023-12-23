@@ -232,6 +232,7 @@ private slots:
     void test_case13();
     void test_case14();
     void test_case15();
+    void test_case16();
 };
 
 LQObjectSerializerTest::LQObjectSerializerTest()
@@ -780,6 +781,100 @@ void LQObjectSerializerTest::test_case15()
     QCOMPARE(m->vmap(), vmap);
     QCOMPARE(m->vhash(), vhash);
     QCOMPARE(m->vlist(), vlist);
+}
+
+class WeirdRectStringifier : public lqo::Stringifier
+{
+public:
+    QString stringify(const QVariant& v) override {
+        if (v.isNull() || !v.canConvert<QRectF>())
+            return QString();
+        return "abc";
+    }
+
+    QVariant destringify(const QString& /* s */) override {
+        return QRectF(1, 2, 3, 4);
+    }
+};
+
+struct TypeSerializationStruct
+{
+    int a;
+    QString b;
+    TypeSerializationStruct() : a(0) {}
+    TypeSerializationStruct(const TypeSerializationStruct& other) : a(other.a), b(other.b) {}
+    TypeSerializationStruct(int a, const QString& b) : a(a), b(b) {}
+    void operator=(const TypeSerializationStruct& other) {
+        this->a = other.a;
+        this->b = other.b;
+    }
+    bool operator==(const TypeSerializationStruct& other) const {
+        return other.a == a && other.b == b;
+    }
+};
+Q_DECLARE_METATYPE(TypeSerializationStruct)
+
+class StructStringifier : public lqo::Stringifier
+{
+public:
+    QString stringify(const QVariant& v) override {
+        if (v.isNull() || !v.canConvert<TypeSerializationStruct>())
+            return QString();
+        return QString("%1,%2")
+            .arg(v.value<TypeSerializationStruct>().a)
+            .arg(v.value<TypeSerializationStruct>().b);
+    }
+
+    QVariant destringify(const QString& s) override {
+        TypeSerializationStruct t;
+        t.a = s.split(',')[0].toInt();
+        t.b = s.split(',')[1];
+        return QVariant::fromValue<TypeSerializationStruct>(t);
+    }
+};
+
+L_BEGIN_CLASS(TypeSerialization)
+Q_CLASSINFO("myRect", "weird")
+L_RW_PROP_AS(QRectF, myRect)
+L_RW_PROP_AS(QRectF, myRect2)
+L_RW_PROP_AS(TypeSerializationStruct, myStruct)
+L_END_CLASS
+
+void LQObjectSerializerTest::test_case16()
+{
+    qRegisterMetaType<TypeSerializationStruct>();
+
+    TypeSerializationStruct s;
+    s.a = 1;
+    s.b = QSL("2");
+
+    TypeSerialization ts;
+    ts.set_myRect(QRectF(10, 20, 30, 40));
+    ts.set_myRect2(QRectF(11, 21, 31, 41));
+    ts.set_myStruct(s);
+
+    qDebug() << "MT:" << QMetaType::fromName("TypeSerializationStruct");
+
+    const lqo::MemberStringifiersMap memberStringifiers = {
+        { QSL("weird"), QSharedPointer<lqo::Stringifier>(new WeirdRectStringifier) }
+    };
+    const lqo::TypeStringifiersMap typeStringifiers = {
+        { QMetaType::fromName("QRectF"), QSharedPointer<lqo::Stringifier>(new lqo::RectStringifier) },
+        { QMetaType::fromName("TypeSerializationStruct"), QSharedPointer<lqo::Stringifier>(new StructStringifier) }
+    };
+    QJsonObject json = lqo::Serializer(memberStringifiers, typeStringifiers).serialize(&ts);
+
+    QCOMPARE(json["myRect"].toString(), QSL("abc"));
+    QCOMPARE(json["myRect2"].toString(), lqt::string_from_rect(ts.myRect2()));
+    QCOMPARE(json["myStruct"].toString(), QSL("1,2"));
+
+    lqo::Deserializer<TypeSerialization> d(memberStringifiers, typeStringifiers);
+    QScopedPointer<TypeSerialization> des(d.deserialize(json));
+
+    QCOMPARE(des->myRect(), QRectF(1, 2, 3, 4));
+    QCOMPARE(des->myRect2(), QRectF(11, 21, 31, 41));
+    QCOMPARE(des->myRect2(), QRectF(11, 21, 31, 41));
+    QCOMPARE(des->myStruct(), TypeSerializationStruct(1, QSL("2")));
 }
 
 QTEST_GUILESS_MAIN(LQObjectSerializerTest)
