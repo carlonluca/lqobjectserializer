@@ -446,7 +446,7 @@ QVariant Deserializer<T>::destringify(const QString& value,
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
                                                metaProp.metaType(),
 #else
-                                               QMetaType::type(metaProp.typeName()),
+                                               QMetaType(QMetaType::type(metaProp.typeName())),
 #endif
 
                                                m_memberStringifiers,
