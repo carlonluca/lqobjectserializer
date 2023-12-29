@@ -90,7 +90,7 @@ All JSON types can be deserialized to the corresponding variant counterpart:
 
 | lqobjectserializer | JSON |
 | --- | ----------- |
-| `QObject`* | object |
+| `QObject*` | object |
 | gadget* | object |
 | `bool` | boolean |
 | `ushort`, `short`, `ulonglong`, `ulong`, `longlong`, `long`, `int`, `uint` | number
