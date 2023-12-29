@@ -66,7 +66,7 @@ public:
     virtual QVariant destringify(const QString&) { return QVariant(); }
 };
 typedef QHash<QString, QSharedPointer<Stringifier>> MemberStringifiersMap;
-typedef QHash<QMetaType, QSharedPointer<Stringifier>> TypeStringifiersMap;
+typedef QHash<int, QSharedPointer<Stringifier>> TypeStringifiersMap;
 
 ///
 /// \brief The LRectStringifier class is a stringifier for the QRectF and QRect types. It
@@ -248,8 +248,8 @@ inline Stringifier* find_stringifier(const QMetaObject* metaObject,
             return memberStringifiers.value(stringifierName).data();
     }
 
-    if (typeStringifiers.contains(metaType))
-        return typeStringifiers.value(metaType).data();
+    if (typeStringifiers.contains(metaType.id()))
+        return typeStringifiers.value(metaType.id()).data();
 
     return nullptr;
 }

@@ -853,15 +853,20 @@ void LQObjectSerializerTest::test_case16()
     ts.set_myRect2(QRectF(11, 21, 31, 41));
     ts.set_myStruct(s);
 
-    qDebug() << "MT:" << QMetaType::fromName("TypeSerializationStruct");
-
     const lqo::MemberStringifiersMap memberStringifiers = {
         { QSL("weird"), QSharedPointer<lqo::Stringifier>(new WeirdRectStringifier) }
     };
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     const lqo::TypeStringifiersMap typeStringifiers = {
-        { QMetaType::fromName("QRectF"), QSharedPointer<lqo::Stringifier>(new lqo::RectStringifier) },
-        { QMetaType::fromName("TypeSerializationStruct"), QSharedPointer<lqo::Stringifier>(new StructStringifier) }
+        { QMetaType::fromName("QRectF").id(), QSharedPointer<lqo::Stringifier>(new lqo::RectStringifier) },
+        { QMetaType::fromName("TypeSerializationStruct").id(), QSharedPointer<lqo::Stringifier>(new StructStringifier) }
     };
+#else
+    const lqo::TypeStringifiersMap typeStringifiers = {
+        { QMetaType::type("QRectF"), QSharedPointer<lqo::Stringifier>(new lqo::RectStringifier) },
+        { QMetaType::type("TypeSerializationStruct"), QSharedPointer<lqo::Stringifier>(new StructStringifier) }
+    };
+#endif
     QJsonObject json = lqo::Serializer(memberStringifiers, typeStringifiers).serialize(&ts);
 
     QCOMPARE(json["myRect"].toString(), QSL("abc"));
