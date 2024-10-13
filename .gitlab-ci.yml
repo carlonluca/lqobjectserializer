@@ -7,6 +7,7 @@ stages:
   - test_qt62
   - test_qt66
   - test_qt67
+  - test_qt68
 
 Test_qt5:
   stage: test_qt5
@@ -68,6 +69,20 @@ Test_qt67:
   stage: test_qt67
   image:
     name: "carlonluca/qt-dev:6.7.3"
+    entrypoint: [""]
+  script:
+    - cd LQObjectSerializerTest
+    - mkdir build
+    - cd build
+    - cmake ../qt6
+    - make
+    - ./LQObjectSerializerTest
+    - ./LGithubTestCase
+
+Test_qt68:
+  stage: test_qt68
+  image:
+    name: "carlonluca/qt-dev:6.8.0"
     entrypoint: [""]
   script:
     - cd LQObjectSerializerTest
