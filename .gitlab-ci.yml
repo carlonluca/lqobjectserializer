@@ -97,7 +97,7 @@ Test_qt68:
 Test_qt69:
   stage: test_qt69
   image:
-    name: "carlonluca/qt-dev:6.9.0"
+    name: "carlonluca/qt-dev:6.9.1"
     entrypoint: [""]
   script:
     - cd LQObjectSerializerTest
