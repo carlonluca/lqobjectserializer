@@ -37,8 +37,20 @@
 #include <QLoggingCategory>
 #include <QMutex>
 #include <QMetaMethod>
-#include <QSequentialIterable>
 #include <QDebug>
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 11, 0)
+#define L_SUPPORTS_QSEQUENTIALITERABLE
+#endif
+
+// LSequentialIterable is just for internal use.
+#ifdef L_SUPPORTS_QSEQUENTIALITERABLE
+#include <QSequentialIterable>
+using LSequentialIterable = QSequentialIterable;
+#else
+#include <QMetaSequence>
+using LSequentialIterable = QMetaSequence::Iterable;
+#endif
 
 #include "../deps/lqtutils/lqtutils_prop.h"
 #include "../deps/lqtutils/lqtutils_string.h"
@@ -137,7 +149,7 @@ public:
 
 public:
     QJsonValue serializeObject(const void* value, const QMetaObject* metaObj);
-    QJsonArray serializeArray(const QSequentialIterable& it, const QMetaObject* metaObject);
+    QJsonArray serializeArray(const LSequentialIterable& it, const QMetaObject* metaObject);
     template<typename T>
     QJsonValue serializeDictionary(const T& variant);
     QJsonValue serializeValue(const char* propName, const QVariant& value, const QMetaObject* metaObject);
@@ -171,7 +183,7 @@ template<class T>
 QJsonArray Serializer::serialize(const QList<T>& array, const QMetaObject* metaObject)
 {
     QVariant list = QVariant::fromValue(array);
-    return serializeArray(list.value<QSequentialIterable>(), metaObject);
+    return serializeArray(list.value<LSequentialIterable>(), metaObject);
 }
 
 ///

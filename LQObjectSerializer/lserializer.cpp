@@ -61,7 +61,7 @@ QJsonValue Serializer::serializeObject(const void* object, const QMetaObject* me
     return json;
 }
 
-QJsonArray Serializer::serializeArray(const QSequentialIterable& it, const QMetaObject* metaObject)
+QJsonArray Serializer::serializeArray(const LSequentialIterable& it, const QMetaObject* metaObject)
 {
     QJsonArray ret;
     for (const QVariant& variant : it)
@@ -77,7 +77,7 @@ QJsonValue Serializer::serializeValue(const char* propName, const QVariant& valu
     QMetaType metaType(value.userType());
     switch (metaType.id()) {
     case QMetaType::QVariantList:
-        return serializeArray(value.value<QSequentialIterable>(), metaObject);
+        return serializeArray(value.value<LSequentialIterable>(), metaObject);
     case QMetaType::QVariant:
         // Try to convert.
         break;
@@ -151,7 +151,7 @@ QJsonValue Serializer::serializeValue(const char* propName, const QVariant& valu
     if (stringifier)
         return stringifier->stringify(value);
     if (value.canConvert<QVariantList>())
-        return serializeArray(value.value<QSequentialIterable>(), metaObject);
+        return serializeArray(value.value<LSequentialIterable>(), metaObject);
     if (value.canConvert<QVariantHash>())
         return serializeDictionary(value.value<QVariantHash>());
     if (value.canConvert<QVariantMap>())
