@@ -127,7 +127,7 @@ Test_qt610:
 Test_qt611:
   stage: test_qt611
   image:
-    name: "carlonluca/qt-dev:6.11.0"
+    name: "carlonluca/qt-dev:6.11.1_resolute"
     entrypoint: [""]
   script:
     - cd LQObjectSerializerTest
